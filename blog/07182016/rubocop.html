@@ -37,41 +37,14 @@
       <strong>Como instalar</strong>
         <p>Pra instalar é bem simples bastar digitar: <code>gem install rubocop</code>, mas recomendo adcionar ao seu arquivo Gemfile pois assim quem for contribuir para seu projeto
            pode simplesmente rodar um 'bundle install' e vai ter ele.</p>
-        <p>Seu Gemfile deve uma linha mais ou menos assim:<br>
-          <code>gem install 'rubocop', require: false</code></p>
+        <p>Seu Gemfile deve ser uma linha mais ou menos assim:<br>
+          <code>gem install '<span>rubocop</span>', require: false</code></p>
       <strong>Use e repita, e repita e repita...</strong>
          <p>Pra rodar o rubocop é bem simple é só digitar <code>rubocop</code> Não se assuste com o número de 'ofensas' que pode vir a ser bem grande.</p>
          <p>Eu recomendo criar um arquivo .rubocop.yml na raiz do seu projeto, assim você pode adcionar parametros que se adeque melhor ao seu projeto.<br>
            Por exemplo: O tamanho máximo que sua linha deve ter, o tamanho máximo que seus métodos devem ter, pastas que não devem ou devem ser testadas.<br>
            Seu arquivo vai ficar mais ou menos assim:</p>
-<pre>
-<code>
-Documentation:
-  Enabled: false
-Style/IfUnlessModifier:
-  MaxLineLength: 100
-Style/WhileUntilModifier:
-  MaxLineLength: 100
-Style/AlignHash:
-  Enabled: false
-
-Metrics/LineLength:
-  Max: 100
-Metrics/MethodLength:
-  Max: 5
-Metrics/ParameterLists:
-  Max: 4
-
-AllCops:
-  Include:
-    - '**/Rakefile'
-    - '**/config.ru'
-  Exclude:
-    - 'db/**/*'
-    - 'config/**/*'
-    - 'bin/**/*'
-</code>
-</pre>
+      <img src="../../files/images/rubocop.png" />
       <strong>Done! Have fun!</strong>
     </div>
   </div>

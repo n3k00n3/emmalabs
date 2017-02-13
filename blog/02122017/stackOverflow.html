@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <title>n3k00n3| Labs</title>
+  <meta name="viewport" content="width=device-width">
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="../../files/style.css" rel="stylesheet">
+  <link href="../../files/colors-dark.css" rel="stylesheet">
+</head>
+<body>
+
+  <header id="header">
+    <a href="index.html"><img alt="Emma | Labs" src="../../files/logo.png"></a>
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../blog.html">Blog</a></li>
+		  <li><a href="../../links.html">Links</a></li>
+          <li><a href="../../about.html">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  <div id="content">
+    <div id="blog-archives">
+	    <h1><strong>Buffer Overflow (parte 1)</strong></h1>
+      <h2>Stack Based Overflow</h2><br>
+      <h3>Introdução</h3>
+      <p>Então gente do bem, esse é um assunto muito conhecido pela maioria das pessoas que iniciam suas vidas no mundo de infosec e programming(mais frequentemente em C).<br>
+      Vou dividir o assunto em 3 partes para que fique melhor explicado</p>
+
+      <p> Buffer Overflow é basicamente o transbordamento de memória, isso é quando colocamos muitos dados em um espaço que não cabe essa quantidade passada, ou seja, além de preencher determinado espaço, acaba preenchendo outros espaços também. causando um transbordamento ou também conhecido como estouro.</p>
+      
+      <h4>Como isso acontence?</h4>
+      muitas vezes o/a programador(a) não faz a verificação da quantidade que deve ser alocada em determinada área de memória e os dados que transbordam ficam em outros espaços que tem informações úteis para o programa continuar executando, com isso o programa pode ter um comportamento estranho, podendo travar, executar o que não deveria e  outras coisitas mais.</p>
+
+      <h3>Registradores de usos gerais</h3>
+      <p> Então o processador tem espaços de memórias chamados registradores, alguns desses registradores são de uso geral, são eles: EAX(Acummulator), EBX(Base), ECX(Counter), EDX(Data) basicamente eles são usados para vários objetivos, por isso representam os 4 primeiros registradores de uso geral.<br>
+      Temos também ESP(Stack Pointer), EBP(Base Pointer), ESI(Source Index) E EDI(Destination Index) que também são de uso geral, mas na maioria das vezes, são conhecidos como apontadores e indexadores.</p>
+
+      <p>E temos o EIP que é o Instruction Pointer que sempre vai apontar para o endereço da próxima instrução.</p>
+
+      <p>Agora é hora de entendermos a pilha, isso vai facilitar o entendimento do Buffer Overflow</p>
+
+      <h3> Stack ou pilha </h3>
+
+      <p>A stack funciona como uma pilha de coisas, como por exemplo uma pilha de pratos, ou uma pilha de panquecas, ou uma pilha de de livros. Onde o que é colocado primeiro é o último a sair(FILO - First In Last Out ) ou (LIFOLast In First Out).
+      A pilha é usada para guardar variáveis locais, argumentos de funções, endereços de etorno</p>
+
+      <p>Duas instruções são usadas para por algo na pilha e para retirar, são elas PUSH(empurrar) e POP(retirar)<br>
+      Temos também dois registradoes que apontam um para o topo da pilha e uma sempre para a base da pilha. São eles
+      EBP -> Extended Base Pointer(32bits) ou RBP(64bits)/BP(16 bits)...
+      ESP -> Extended Stack Pointer(32bits) ou RSP e blá blá blá....
+
+      Quando algo é alocado na pilha o endereço é sempre decrementado e quando a retirado é incrementado por exemplo:
+      Se você coloca um inteiro na pilha e sabemos que um inteiro é formado por 4 bytes uma dword, então o local desse inteiro é igual EBP - 4, mas também podemos usar ESP e ser ESP + 4.
+      <code><pre>
+      
+
+                           Mem baixa
+                      |-----------------------|
+     0xbffff520 : ESP |       Buffer          | Contém o ponteiro para nosso array de carácteres
+                      |-----------------------| 
+                      |       Buffer          |  Tudo entre EBP e ESP é a stack da função tal 
+                      |-----------------------|
+     0xbffff538 : EBP |       EBP             | 
+                      |-----------------------|
+                      |    End de retorno     |
+                      |-----------------------|
+                                ...
+
+          Endereços mais altos(pois a pilha cresce para baixo)
+
+Abaixo do End de retorno fica a pilha da função que chamou a função a cima,<br> por exemplo, a main chamando uma outra função.
+      </pre></code>
+
+      <p>vamos usar como base esse pequeno programinha a seguir:</p>
+      <code><blockquote><pre>
+    #include  &#60;stdio.h&#62;
+    #include  &#60;string.h&#62;
+
+    void Hijacked(){
+      printf("%s\n", "Execution Hijacked!");
+    }
+
+    void good_function(char *str){
+      char buffer[5];
+      strcpy(buffer, str);
+    }
+
+    void main(int argc, char *argv[]){
+      good_function(argv[1]);
+      printf("%s\n", "Executed normally");
+    }
+      </pre></blockquote></code>
+
+    <p>vamos compilar sem as proteções do linux(Depois explicamos mais sobre essas proteções) e com as informações extras para debugging</p>
+    <code><blockquote>
+    n3k00n3@labs ~> gcc -ggdb -fno-stack-protector stackOverflow.c -o stackOverflow
+    </blockquote></code>     
+
+    <p>Bala, agora temos nosso simples programinha, que vai nos ajudar o funcionamento da stack.<br>
+    Esse programinha é bem simples, ele pega os argumentos pela linha de comando e chama a função good_function passando esse argumento que o argv[1],'já que o arg[0] é nome do programa'. Dentro dessa função ele simplesmente copia esse argumento para o buffer e retorna nos dizendo que "Executed normally" ou seja em nenhum momento a função Hijacked é chamada no nosso programinha<p>
+
+    <h3>Hora de debugar!</h3>
+
+    <p>Com a ajuda do GDB vamos iniciar nosso programinha e ver como ele funciona e passar o argumento e ver onde ele é guardado na memória.</p>
+
+      <code><blockquote>
+    n3k00n3@labs ~> gdb -q ./stackOverflow
+    </blockquote></code>     
+
+    <p>A opção "-q" é apenas para ele não iniciar com as informações que ele sempre inicia<p>
+    Antes de disassemblar vamos usar esse comando a baixo, para vermos com a syntax intel e não a AT&T(Eu prefiro intel, mas se tu prefere a outra, fique a vontade pra continuar usando ela)</p>
+      <code><blockquote>
+    set disassembly-flavor intel
+    </blockquote></code>
+
+    <p> Tudo prontinho, vamos analisar o programinha e ver como ele se comporta quando recebe diferentes quantidades de bytes no seu argumento, primeiro vamos ver com 4 bytes que é o que ele espera no buffer já que o o último byte tem que ser o 0x0 para finalizar o array.</p>
+
+    <p> Para fazer o disassemble da função main basta digitar disas main.</p>
+
+    <code><blockquote><pre>
+     (gdb) disas main
+     Dump of assembler code for function main:
+     0x0000000000400599 <+0>: push   rbp
+     0x000000000040059a <+1>: mov    rbp,rsp
+     0x000000000040059d <+4>: sub    rsp,0x10
+     0x00000000004005a1 <+8>: mov    DWORD PTR [rbp-0x4],edi
+     0x00000000004005a4 <+11>:  mov    QWORD PTR [rbp-0x10],rsi
+   =>0x00000000004005a8 <+15>:  mov    rax,QWORD PTR [rbp-0x10]
+     0x00000000004005ac <+19>:  add    rax,0x8
+     0x00000000004005b0 <+23>:  mov    rax,QWORD PTR [rax]
+     0x00000000004005b3 <+26>:  mov    rdi,rax
+     0x00000000004005b6 <+29>:  call   0x400577 &#60;good_function&#62;
+     0x00000000004005bb <+34>:  mov    edi,0x400668
+     0x00000000004005c0 <+39>:  call   0x400440 &#60;puts@plt&#62;
+     0x00000000004005c5 <+44>:  nop
+     0x00000000004005c6 <+45>:  leave  
+     0x00000000004005c7 <+46>:  ret    
+    End of assembler dump.
+  </pre></blockquote></code>
+
+  <p>Então essa é a saida do disassemble, podemos ver o código em assembly, se você não sabe assembly, não se preocupe com isso ainda, falaremos disso em um outro post, mas basicamente as instuções mov rbp, rsp move o endereço de rsp para a rbp, repare que o destino fica na frente da origem. Você também deve ter observado que o registrador está com o r na frente, isso porque estamos em processador de arquitetura 64bits.</p>
+
+  <p>Como você deve ter imaginado a instrução call é para chamar uma função que nesse caso é good_function e a segunda é o printf.</p>
+
+  <p> vamos usar agora alguns breakpoints para entender o que acontece quando rodamos o programa, o breakpoint nada mais é que um interruptor, a gente o usa para parar determinada instrução, pois se não e executa o programa muito rápido e não podemos entender o que estar acontecendo, um debugger funciona em dois estados, parado e rodando. para vermos o que está acontecendo temos que parar o programa, então roda o mesmo e ir vendo o que acontece, como se comporta. Esse é o ciclo.</p>
+
+  <p>para setar um breakpoint tu simplesmente digita b main, nesse caso estamos parando assim que ele inicia nossa principal função.<br>
+  se usarmos o comando list podemos ver o código do comando, isso porque compilamos o programa com essas informações.
+  <br><br>
+  Agora vamos setar mais dois breakpoints um na linha 10 que é quando a função strcpy é usada e um na linha 11
+  que é quando ele está saindo da função good_function</p>
+<code><blockquote><pre>
+  (gdb) b 10
+  Ponto de parada 1 at 0x400583: file overflowtest.c, line 10.
+  </pre></blockquote></code>
+  <code><blockquote><pre>
+  gdb-peda$ b 11
+  Ponto de parada 2 at 0x400596: file overflowtest.c, line 11.
+</pre></blockquote></code>
+
+<p>Certinho, agora vamos rodar ele</p>
+<code><blockquote><pre>
+(gdb) run AAAA
+Starting program: /home/n3k00n3/projetos/rev/stackOverflow AAAA
+
+Breakpoint 1, main (argc=2, argv=0x7fffffffdf48) at overflowtest.c:14
+14      good_function(argv[1]);
+
+</pre></blockquote></code>
+
+<p>O program inicia e para dentro de main, vamos analisar como estão os registradores agora.<br>
+Primeiro vamos olhar para onde aponta a stack.
+
+<code><blockquote><pre>
+(gdb) x/16xw $rsp
+0x7fffffffde50: 0xffffdf48  0x00007fff  0x00000000  0x00000002
+0x7fffffffde60: 0x004005d0  0x00000000  0xf7a2e830  0x00007fff
+0x7fffffffde70: 0x00000000  0x00000000  0xffffdf48  0x00007fff
+0x7fffffffde80: 0x00000000  0x00000002  0x00400599  0x0000000
+</pre></blockquote></code>
+
+<p> o comando x/16xw $rsp é simplesmente o comando examine do gdb que é x a barra é com que tipo de representação queremos ver que nesse caso é x = hex mas podemos ver também em d=deciamal, o=octo e v=binário o w representa uma dword que é formado por 4bytes e nesse caso estamos vendo 16DWORDS em hexadecimal.</p>
+<p>Então sabemos que RSP contêm o endereço 0x7fffffffde50 e dentro desse endereço temos 0x00007fffffffdf48 Isso é o topo da função Main</p>
+
+<p>e o que temos em RBP</p>
+<code><blockquote><pre>
+(gdb) x/1xw $rbp
+0x7fffffffde60: 0x00000000004005d0
+</pre></blockquote></code>
+
+<p>Agora sabemos que a stack de main é da seguinte forma:</p>
+<code><blockquote><pre>
+0x7fffffffde50: 0xffffdf48  0x00007fff  0x00000000  0x00000002
+0x7fffffffde60: 0x004005d0  0x00000000
+</pre></blockquote></code>
+
+<p>Não tem muita coisa não, até porque a função main, só chama a função good_funtion passando nosso argumento e depois exibe uma linha no output</p>
+
+
+<p> Agora vamos executar nosso programa até chegar até o próximo breakpoint usando o comando c = continue<br>
+Podemos esperar que o endereço de retorno para main seja colocado na stack. Assim como a stack será decrementada, pois vamos ter uma "nova stack". Não podemos esquecer que a stack cresce para baixo, então o topo dela ficará em um endereço mais baixo.</p>
+
+<code><blockquote><pre>
+(gdb) c
+Continuando.
+
+Breakpoint 2, good_function (str=0x7fffffffe2c6 "AAAA") at overflowtest.c:10
+10      strcpy(buffer, str);
+
+(gdb) x/16xw $rsp
+0x7fffffffde20: 0x00000001  0x00000000  0xffffe2c6  0x00007fff
+0x7fffffffde30: 0x00000000  0x00000000  0x00000000  0x00000000
+0x7fffffffde40: 0xffffde60  0x00007fff  0x004005bb  0x00000000
+0x7fffffffde50: 0xffffdf48  0x00007fff  0x00000000  0x00000002
+
+(gdb) x/1xw $rbp
+0x7fffffffde40: 0xffffde60 0x00007ff 
+
+</pre></blockquote></code>
+
+<p>Incrível, Agora sabemos que a stack de good_function é 0x7fffffffde20: 0x00000001 e sua base é 0x7fffffffde40: 0x00007fffffffde60 </p>
+
+Então ela é formada por por 
+
+<code><blockquote><pre>
+0x7fffffffde20: 0x00000001  0x00000000  0xffffe2c6  0x00007fff
+0x7fffffffde30: 0x00000000  0x00000000  0x00000000  0x00000000
+0x7fffffffde40: 0xffffde60 0x00007ff
+</pre></blockquote></code>
+
+<p> ou seja, oque temos entre o incio da stack frame de good_function e o topo de main só pode ser o endereço de retorno correto?</p>
+
+<p> vamos disssemblar main novamente e ver onde aparece</p>
+
+<code><blockquote><pre>
+0x00000000004005bb <+34>: mov    edi,0x400668
+</pre></blockquote></code>
+
+<p>Perfeito! Como esperavamos o endereço de retorno é a próxima instrução após a chamada da função good_function<br>
+Agora vamos continuar o programa, ele tem mais um breakpoint antes de sair da função, então podemos olhar como ficou a stack após o strcpy:
+</p>
+
+<code><blockquote><pre>
+(gdb) c
+Continuando.
+
+Breakpoint 3, good_function (str=0x7fffffffe2c6 "AAAA") at overflowtest.c:11
+11  }668
+</pre></blockquote></code>
+
+<code><blockquote><pre>
+(gdb) x/16xw $rsp
+0x7fffffffde20: 0x00000001  0x00000000  0xffffe2c6  0x00007fff
+0x7fffffffde30: 0x41414141  0x00000000  0x00000000  0x00000000
+0x7fffffffde40: 0xffffde60  0x00007fff  0x004005bb  0x00000000
+0x7fffffffde50: 0xffffdf48  0x00007fff  0x00000000  0x00000002
+
+(gdb) x/1xw $rbp
+0x7fffffffde40: 0x00007fffffffde60
+(gdb)
+</pre></blockquote></code>
+
+<p>Como podemos ver nossos A's que são 41 na tabela ascii foram colocados na stack, preechendo noss buffer e deixando o endereço de retorno intacto.</p>
+
+<p>Agora vamos continuar o programa usando o comando c.</p>
+
+<code><blockquote><pre>
+(gdb) c
+Continuando.
+Executed normally
+[Inferior 1 (process 24355) exited with code 022
+</pre></blockquote></code>
+
+<p>Como esperado o programa termina normalmente e nos mostra a mensagem "Executed normally"</p>
+
+<h3>Provocando a o buffer overflow</h3>
+
+<p>Agora vamos passar um número suficiente de A's para sobrescrever o endereço de retorno que já sabemos onde é como vimos logo acima.</p>
+<code><blockquote><pre>
+gdb) run $(python -c 'print "A" * 30')
+Starting program: /home/n3k00n3/projetos/rev/stackOverflow $(python -c 'print "A" * 30')
+
+Breakpoint 1, main (argc=2, argv=0x7fffffffdf38) at overflowtest.c:14
+14      good_function(argv[1]);
+</pre></blockquote></code>
+
+<p> dessa vez passamos os A's em um subshell para não precisarmos escrever A 30 vezes.</p>
+
+<code><blockquote><pre>
+(gdb) 
+(gdb) x/16xw $rsp
+0x7fffffffde40: 0xffffdf38  0x00007fff  0x00000000  0x00000002
+0x7fffffffde50: 0x004005d0  0x00000000  0xf7a2e830  0x00007fff
+0x7fffffffde60: 0x00000000  0x00000000  0xffffdf38  0x00007fff
+0x7fffffffde70: 0x00000000  0x00000002  0x00400599  0x00000000
+(gdb) x/1xw $rbp
+0x7fffffffde50: 0x004005
+</pre></blockquote></code>
+
+<p>Perceba que a stack mudou um pouco já que estamos passando mais argumentos dessa vez, mas RBP continua sendo 0x0000000x004005d0 mas agora está em 0x7fffffffde50 e não mais em 0x7fffffffde60<br>
+e o topo de main aponta para 0x7fffffffde40: 0x00007fffffffdf38 ou seja 64bytes deslocado já que estamos em um ambiente de 64bits</p>
+
+Agora vamos c o programa e olhar novamente.
+
+<code><blockquote><pre>
+(gdb) c
+Continuando.
+
+Breakpoint 2, good_function (str=0x7fffffffe2ac 'A' &#60;repete 30 vezes&#62;)
+    at overflowtest.c:10
+10      strcpy(buffer, str);
+(gdb) x/16xw $rsp
+0x7fffffffde10: 0x00000001  0x00000000  0xffffe2ac  0x00007fff
+0x7fffffffde20: 0x00000000  0x00000000  0x00000000  0x00000000
+0x7fffffffde30: 0xffffde50  0x00007fff  0x004005bb  0x00000000
+0x7fffffffde40: 0xffffdf38  0x00007fff  0x00000000  0x00000002
+
+(gdb) x/1xg 0x7fffffffde30 + 8
+0x7fffffffde38: 0x00000000004005bb
+</pre></blockquote></code>
+
+<p>Repare que nosso endereço de retorno continua apontando para o mesmo local e está logo acima do topo de main.<br>
+0x00000000004005bb em 0x7fffffffde38 que é 0x7fffffffde30 + 8(8 porque estamos em um ambiente 64bits se fosse 32 seria 4)
+</p>
+
+<p> e pra que fique mais claro isso vou usar o comando x/(número)xg pra vermos um qword(8bytes) ao invés de uma dword(4bytes)</p>
+
+<code><blockquote><pre>
+(gdb) c
+Continuando.
+
+Breakpoint 3, good_function (str=0x7fffffffe2ac 'A' &#60;repete 30 vezes&#62;)
+    at overflowtest.c:11
+11  }
+
+(gdb) x/16xg $rsp
+0x7fffffffde10: 0x0000000000000001  0x00007fffffffe2ac
+0x7fffffffde20: 0x4141414141414141  0x4141414141414141
+0x7fffffffde30: 0x4141414141414141  <strong><span style="color:#80BFFF">0x0000414141414141</span></strong>
+0x7fffffffde40: 0x00007fffffffdf38  0x0000000200000000
+0x7fffffffde50: 0x00000000004005d0  0x00007ffff7a2e830
+0x7fffffffde60: 0x0000000000000000  0x00007fffffffdf38
+0x7fffffffde70: 0x0000000200000000  0x0000000000400599
+0x7fffffffde80: 0x0000000000000000  0x03ce895411192e5c
+
+(gdb) c
+Continuando.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000414141414141 in ?? ()
+</pre></blockquote></code>
+
+<p> Endereço de retono sobrescrito com A's. O programa acaba dando um erro de Segmentarion Fault, pois o endereço que está no endereço não existe. Então já era! Causamos um BufferOverflow! Mas não queremos apenas travar o programa, queremos que ele rode a outra função que tem nesse programa!</p>
+
+         <br><br>
+      <strong>Done! Happy code!</strong>
+    </div>
+  </div>
+  </div>
+  <footer id="footer">
+    <p class="copyright">Hack The Planet!</p>
+    <!-- Thanks to <a href="http://www.webmaster-source.com">Matt Harzewski</a> for the theme!!!</p> -->
+  </footer>
+  <script src="../../files/jquery.min.js"></script>
+  <script src="../../files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+    });
+  </script>
+</body></html>

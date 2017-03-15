@@ -29,11 +29,12 @@
   <div id="content">
     <div id="blog-archives">
 	    <h1><strong>Buffer Overflow (parte 0x01)</strong></h1>
-      <h2>Stack Based Overflow</h2><br>
+      <h2>Stack Overflow</h2><br>
+      
       <h3>Introdução</h3>
+      
       <p>Então gente do bem, esse é um assunto muito conhecido pela maioria das pessoas que iniciam suas vidas no mundo de infosec e programming(mais frequentemente em C).<br>
-      Vou dividir o assunto em 3 partes para que fique melhor explicado.<br>
-      Esse primeiro é sobre stack based overflow, o segundo será sobre heap based overflow e o terceiro será sobre format string</p>
+      Esse primeiro artigo será sobre stack based overflow, o segundo será sobre heap e o terceiro será sobre format string</p>
 
       <p> Buffer Overflow é basicamente o transbordamento de memória, isso é quando colocamos muitos dados em um espaço que não cabe essa quantidade passada, ou seja, além de preencher determinado espaço, acaba preenchendo outros espaços também. causando um transbordamento ou também conhecido como estouro.</p>
       
@@ -54,7 +55,7 @@
       A pilha é usada para guardar variáveis locais, argumentos de funções, endereços de retorno</p>
 
       <p>Duas instruções são usadas para por algo na pilha e para retirar, são elas PUSH(empurrar) e POP(retirar)<br>
-      Temos também dois registradoes que apontam um para o topo da pilha e uma sempre para a base da pilha. São eles:<br>
+      Os registradores abaixo apontam para a base da pilha e o outro para o topo da pilha:<br>
       EBP -> Extended Base Pointer(32bits) ou RBP(64bits)/BP(16 bits)...<br>
       ESP -> Extended Stack Pointer(32bits) ou RSP e blá blá blá....
 
@@ -104,7 +105,7 @@
     n3k00n3@labs ~> gcc -ggdb -fno-stack-protector stackOverflow.c -o stackOverflow
     </blockquote></code>     
 
-    <p>Bala, agora temos nosso simples programinha, que vai nos ajudar o funcionamento da stack.<br>
+    <p>Bala, agora temos nosso simples programinha, que vai nos ajudar a entender o funcionamento da stack.<br>
     Esse programinha é bem simples, ele pega os argumentos pela linha de comando e chama a função good_function passando esse argumento que é o argv[1],já que que o arg[0] é nome do próprio programa.<br>
     Dentro dessa função ele simplesmente copia esse argumento para o buffer e retorna nos dizendo que "Executed normally" ou seja em nenhum momento a função Hijacked é chamada no nosso programinha<p>
 
@@ -147,7 +148,7 @@
     End of assembler dump.
   </pre></blockquote></code>
 
-  <p>Então essa é a saida do disassemble, podemos ver o código em assembly, se você não sabe assembly, não se preocupe com isso ainda, falaremos disso em um outro post, mas basicamente as instuções mov rbp, rsp move o endereço de rsp para a rbp, repare que o destino fica na frente da origem. Você também deve ter observado que o registrador está com o r na frente, isso porque estamos em processador de arquitetura 64bits.</p>
+  <p>Então essa é a saida do disassemble, podemos ver o código em assembly, se você não sabe assembly, não se preocupe com isso ainda, falaremos disso em um outro post, mas basicamente as instuções mov rbp, rsp move o endereço de rsp para a rbp, repare que o destino fica na frente da origem. Você também deve ter observado que o registrador está com o <strong>r</strong> na frente, isso porque estamos em processador de arquitetura 64bits.</p>
 
   <p>Como você deve ter imaginado a instrução call é para chamar uma função que nesse caso é good_function e a segunda é o printf.</p>
 
@@ -425,11 +426,11 @@ That's all folks!
 
     <h3>Referências</h3>
     <ul>
-    <li><a href="http://phrack.org/issues/49/14.html#article" target="_blank">Smashshig the stack for fun and rofit</a></li>
+    <li><a href="http://phrack.org/issues/49/14.html#article" target="_blank">Smashing the stack for fun and profit</a></li>
     <li><a href="http://www.livrariacultura.com.br/p/testes-de-invasao-15067840?id_link=13776&adtype=pla&gclid=COzh2vSxl9ICFQ0HkQodx8IFxA" target="_blank">Teste de Invasão - Georgia Weidman</a></li>
     <li><a href="https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441" target="_blank">The art of exploitation - Jon Erickson</a></li>
       
-    </ul><br><br>
+    </ul>
     <br><br>
       <strong>Done! Happy code!</strong>
     </div>

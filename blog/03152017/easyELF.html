@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <title>n3k00n3| Labs</title>
+  <meta name="viewport" content="width=device-width">
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="../../files/style.css" rel="stylesheet">
+  <link href="../../files/colors-dark.css" rel="stylesheet">
+</head>
+<body>
+
+  <header id="header">
+    <a href="index.html"><img alt="Emma | Labs" src="../../files/logo.png"></a>
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../blog.html">Blog</a></li>
+		  <li><a href="../../links.html">Links</a></li>
+          <li><a href="../../about.html">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  <div id="content">
+    <div id="blog-archives">
+	    <h1><strong>[WRITEUP]Reverse Easy_ELF</strong></h1>
+      <h2>Challenge de reversing.kr</h2>
+      <p>Hoje é dia de reverse! Então gente do bem, estou estudando bastante sobre assembly e Engenharia Reversa, ainda sou bem noob, mas estou progredindo e a meta é evoluir 1%, todos os dias!<br>
+      Espero muito poder contribuir de alguma forma para evolução de vocês também, ainda que com o pouco que sei.</p>
+
+       <p>Esse desafio é do site <a href="http://reversing.kr" target="_blank">Reversing.KR</a> um site da Coreia do Sul para testar as habilidades de reverse e cracking. O que é bom, pois geralmente os desafios são complicados fazendo com que você pense fora da caixa para resolver, além de que durante o processo, você tem que aprender coisas novas. A diversão é garantida!</p>
+
+      <p>Vou tentar explicar algumas coisas durante o writeup, para o foco não ser apenas a resolução do problema, e sim o conhecimento necessário para se chegar até a solução. Acho que o conhecimento gerado até a produção de algo é ainda melhor que o produto final. Isso é muito falado no hackerspace que faço parte o <a href="raulhc.cc" target="_blank">Raul Hacker Club</a>. Se existir algum hackerspace próximo de onde você mora, aproveite esse espaço, aprenda coisas novas, e contribua para que o conhecimento seja disseminado. O conhecimento quer ser livre!</p>
+
+      <p>No primeiro momento em que peguei o challenge eu olhei qual o tipo de arquivo, faço isso antes de qualquer desafio, ainda que eu já tenha uma ideia sobre qual o tipo do arquivo.</p>
+
+      <pre><blockquote><code>
+➜  reversingKR file Easy_ELF 
+Easy_ELF: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2,
+for GNU/Linux 2.6.15, BuildID[sha1]=8edb9e400a3882319cd4582f89dd2373b7e1745c, stripped
+      </code></blockquote></pre>
+
+      <p>Podemos ver que nosso binário é um ELF de 32-bits, <strong>dynamically linked</strong> e <strong>stripped</strong>. Dynamically linked quer dizer que o binário precisa de componentes externos para executar diferente dos binários estáticos que que as bibliotecas são são incluidas no próprio binário, tornando maiores porém mais portáveis.<br>
+      Para ver quais a bibliotecas usadas podemos usar o comando ldd.</p>
+      <pre><blockquote><code>
+➜  reversingKR ldd Easy_ELF         
+  linux-gate.so.1 =>  (0xf7795000)
+  libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf75b3000)
+  /lib/ld-linux.so.2 (0x56625000)
+  </code></blockquote></pre>
+
+    <p>Já stripped quer dizer que o binário foi compilado sem os simbolos do arquivo objeto. Esses simbolos são gerados pelo compilador e nos ajuda a ter mais informações sobre o ELF, como por exemplo as funções.</p>
+
+    <p>Beleza mas até hoje só vi binários <strong>not stripped</strong>. Como vou achar a main do binário e saber onde começa a brincadeira para eu analisar?<br>
+    Good Question!</p>
+
+    <p>Para encontrarmos onde ele inicia vamos usar o objdump e da uma olhada na seção .text que é onde fica código do programa. O uso do grep é apenas para selecionar o que quero ver nesse momento. Mas eu costumo salvar todo o resultado do objdump em um arquivo, pois assim eu consigo comentar e saber o que está sendo feito durante a execução do programa.
+<pre><blockquote><code>
+➜  reversingKR objdump -D Easy_ELF | grep -A13 .text 
+Desmontagem da seção .text:
+
+08048380 <.text>:
+ 8048380: 31 ed                 xor    %ebp,%ebp
+ 8048382: 5e                    pop    %esi
+ 8048383: 89 e1                 mov    %esp,%ecx
+ 8048385: 83 e4 f0              and    $0xfffffff0,%esp
+ 8048388: 50                    push   %eax
+ 8048389: 54                    push   %esp
+ 804838a: 52                    push   %edx
+ 804838b: 68 f0 85 04 08        push   $0x80485f0
+ 8048390: 68 80 85 04 08        push   $0x8048580
+ 8048395: 51                    push   %ecx
+ 8048396: 56                    push   %esi
+ 8048397: 68 1b 85 04 08        push   $0x804851b
+ 804839c: e8 af ff ff ff        call   8048350 <__libc_start_main@plt>
+</code></blockquote></pre>
+
+  <p>Repare que antes da chamada da libc start ele empurra o endereço <strong>0x804851b</strong> esse é o endereço da main, pois o primeiro paramentro para libc start é o ponteiro da main. Então agora podemos setar um breakpoint nesse endereço assim que começarmos a debugar nosso programinha.</p>
+
+  <p>Porém antes de começarmos o debugar, vamos rodar o programa e ver o que ele faz.</p>
+
+<pre><blockquote><code>
+➜  reversingKR ./Easy_ELF A
+Reversing.Kr Easy ELF
+
+a
+Wrong
+➜  reversingKR ./Easy_ELF  
+Reversing.Kr Easy ELF
+
+blabla
+Wrong
+</code></blockquote></pre>
+
+<p>Ao rodarmos o programa ele printa o nome do desafio e espera que seja digitado algo como uma senha, e nos diz: Wrong.<br>
+Suponho então que se colocarmos a senha correta ele vai nos dar um Correct ou algo do tipo. Então é chegada a hora de achar a senha para vencermos esse desafio.</p>
+
+<h2> Hora do GDB! Pois debugar é viver!</h2>
+
+<pre><blockquote><code>
+➜  reversingKR gdb -q Easy_ELF 
+Lendo símbolos de Easy_ELF...(no debugging symbols found)...concluído.
+
+gdb-peda$ b* 0x804851b
+Ponto de parada 1 at 0x804851b
+
+gdb-peda$ run
+</code></blockquote></pre>
+<p>Beleza agora vamos analisar o código em assembly e entender o que o programa está fazendo. Estou usando a syntax intel. E númeri as linhas aqui pra ficar mais simples na hora de falar sobre o que está acontecendo e inicia na 399 porque salvei a saída do objdump em um arquivo de texto e estou printando a função main.</p>
+
+<pre><blockquote><code>
+399  804851b: 55                    push   ebp
+400  804851c: 89 e5                 mov    ebp,esp
+401  804851e: 83 e4 f0              and    esp,0xfffffff0
+402  8048521: 83 ec 10              sub    esp,0x10
+403  8048524: c7 44 24 08 17 00 00  mov    DWORD PTR [esp+0x8],0x17
+404  804852b: 00
+405  804852c: c7 44 24 04 5d 86 04  mov    DWORD PTR [esp+0x4],0x804865d
+406  8048533: 08
+407  8048534: c7 04 24 01 00 00 00  mov    DWORD PTR [esp],0x1
+408  804853b: e8 20 fe ff ff        call   8048360 <write@plt>
+409  8048540: e8 ef fe ff ff        call   8048434 <__isoc99_scanf@plt+0xc4>
+410  8048545: e8 07 ff ff ff        call   8048451 <__isoc99_scanf@plt+0xe1>
+411  804854a: 83 f8 01              cmp    eax,0x1
+412  804854d: 75 0c                 jne    804855b <__isoc99_scanf@plt+0x1eb>
+413  804854f: e8 a3 ff ff ff        call   80484f7 <__isoc99_scanf@plt+0x187>
+414  8048554: b8 00 00 00 00        mov    eax,0x0
+415  8048559: eb 21                 jmp    804857c <__isoc99_scanf@plt+0x20c>
+416  804855b: c7 44 24 08 06 00 00  mov    DWORD PTR [esp+0x8],0x6
+417  8048562: 00
+418  8048563: c7 44 24 04 75 86 04  mov    DWORD PTR [esp+0x4],0x8048675
+419  804856a: 08
+420  804856b: c7 04 24 01 00 00 00  mov    DWORD PTR [esp],0x1
+421  8048572: e8 e9 fd ff ff        call   8048360 <write@plt>
+422  8048577: b8 00 00 00 00        mov    eax,0x0
+423  804857c: c9                    leave
+424  804857d: c3                    ret
+    
+</code><</blockquote></pre>
+
+<p>Da linha <strong>339</strong> até a linha <strong>402</strong> é o prológo da função. Onde ele inicia uma nova stack frame. Na linha <strong>403</strong> ele põe na stack o valor 0x17 que em decimal é 23 e depois ele manda a mensagem que vimos ao rodar o progama que é "Reversing.Kr Easy ELF\n\n" e põe no topo da stack o valor 0x1 que também é 1 em decimal e chama a função write na linha <strong>408</strong>.</p>
+
+<p>Após imprimir a mensagem ele chama <strong>8048434</strong> vamos até la ver o que ele faz.</p>
+
+<pre><blockquote><code>
+334  8048434: 55                    push   ebp
+335  8048435: 89 e5                 mov    ebp,esp
+336  8048437: 83 ec 18              sub    esp,0x18
+337  804843a: b8 50 86 04 08        mov    eax,0x8048650
+338  804843f: c7 44 24 04 20 a0 04  mov    DWORD PTR [esp+0x4],0x804a020
+339  8048446: 08
+340  8048447: 89 04 24              mov    DWORD PTR [esp],eax
+341  804844a: e8 21 ff ff ff        call   8048370 <__isoc99_scanf@plt>
+342  804844f: c9                    leave
+343  8048450: c3                    ret
+</code><</blockquote></pre>
+
+<p>De forma bem resumida dessa vez sabemos até a linha 336 é prológo e ele aloca 0x18 bytes na stack, move 0x8048650(0x25) para eax e move o ponteiro 0x804a020 para esp+0x4 que nesse caso vai ser onde o que escrevermos vai ficar e põe eax como topo da stack.</p>
+
+<p>Ao chegar na linha 341 eu eu dei um next instruction pra saber como ficou o endereço 0x804a020 depois que eu digitei.</p>
+
+<pre><blockquote><code>
+gdb-peda$ x/s 0x804a020
+0x804a020:  "AAAAA"
+</code></blockquote></pre>
+
+<p>Após isso ele retorna para a linha 410: 8048545 que é onde ele chama outra função. vamos ver o que ela faz.</p>
+
+<pre><blockquote><code>
+344  8048451: 55                    push   ebp
+345  8048452: 89 e5                 mov    ebp,esp
+346  8048454: 0f b6 05 21 a0 04 08  movzx  eax,BYTE PTR ds:0x804a021
+347  804845b: 3c 31                 cmp    al,0x31
+348  804845d: 74 0a                 je     8048469 <__isoc99_scanf@plt+0xf9>
+349  804845f: b8 00 00 00 00        mov    eax,0x0
+350  8048464: e9 8c 00 00 00        jmp    80484f5 <__isoc99_scanf@plt+0x185>
+351  8048469: 0f b6 05 20 a0 04 08  movzx  eax,BYTE PTR ds:0x804a020
+352  8048470: 83 f0 34              xor    eax,0x34
+353  8048473: a2 20 a0 04 08        mov    ds:0x804a020,al
+354  8048478: 0f b6 05 22 a0 04 08  movzx  eax,BYTE PTR ds:0x804a022
+355  804847f: 83 f0 32              xor    eax,0x32
+356  8048482: a2 22 a0 04 08        mov    ds:0x804a022,al
+357  8048487: 0f b6 05 23 a0 04 08  movzx  eax,BYTE PTR ds:0x804a023
+358  804848e: 83 f0 88              xor    eax,0xffffff88
+359  8048491: a2 23 a0 04 08        mov    ds:0x804a023,al
+360  8048496: 0f b6 05 24 a0 04 08  movzx  eax,BYTE PTR ds:0x804a024
+361  804849d: 3c 58                 cmp    al,0x58
+362  804849f: 74 07                 je     80484a8 <__isoc99_scanf@plt+0x138>
+363  80484a1: b8 00 00 00 00        mov    eax,0x0
+364  80484a6: eb 4d                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+365  80484a8: 0f b6 05 25 a0 04 08  movzx  eax,BYTE PTR ds:0x804a025
+366  80484af: 84 c0                 test   al,al
+367  80484b1: 74 07                 je     80484ba <__isoc99_scanf@plt+0x14a>
+368  80484b3: b8 00 00 00 00        mov    eax,0x0
+369  80484b8: eb 3b                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+370  80484ba: 0f b6 05 22 a0 04 08  movzx  eax,BYTE PTR ds:0x804a022
+371  80484c1: 3c 7c                 cmp    al,0x7c
+372  80484c3: 74 07                 je     80484cc <__isoc99_scanf@plt+0x15c>
+373  80484c5: b8 00 00 00 00        mov    eax,0x0
+374  80484ca: eb 29                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+375  80484cc: 0f b6 05 20 a0 04 08  movzx  eax,BYTE PTR ds:0x804a020
+376  80484d3: 3c 78                 cmp    al,0x78
+377  80484d5: 74 07                 je     80484de <__isoc99_scanf@plt+0x16e>
+378  80484d7: b8 00 00 00 00        mov    eax,0x0
+379  80484dc: eb 17                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+380  80484de: 0f b6 05 23 a0 04 08  movzx  eax,BYTE PTR ds:0x804a023
+381  80484e5: 3c dd                 cmp    al,0xdd
+382  80484e7: 74 07                 je     80484f0 <__isoc99_scanf@plt+0x180>
+383  80484e9: b8 00 00 00 00        mov    eax,0x0
+384  80484ee: eb 05                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+385  80484f0: b8 01 00 00 00        mov    eax,0x1
+386  80484f5: 5d                    pop    ebp
+387  80484f6: c3                    ret
+</code></blockquote></pre>
+
+<p>Bala, agora chegou em uma parte maneira do programa que é onde ele analisar o que digitamos com o que ele quer e ele faz uma criptografia simples chamada XOR em algumas letras. XOR é o OU exclusivo da álgebra booleana. Se tu não sabe como funciona isso é bom dar uma pesquisada, pois isso é muito importante, é o que chamamos de base para engenharia reversa e computação como todo. Vou deixar um pdf que fala sobre o assunto, nas tente não se limitar a apenas esse.</p>
+
+<p>Certo! Sabemos que no endereço <strong>0x804a020</strong> e que digitamos "AAAAA" então o endereço é um array de string que está assim:<br>
+0x804a020 = "A"<br>
+0x804a021 = "A"<br>
+0x804a022 = "A"<br>
+0x804a023 = "A"<br>
+0x804a024 = "A"<br></p>
+
+<p>na linha 346 ele pega o que está dentro de 0x804a021 e põe em eax, depois ele compara o que temos em al(eax(32bits)=ah(8bits)+al(8bits)) com 0x31(1). Tu pode conferir o que é abrindo a tabela ascii com o comando <strong>man ascii</strong>.<br>
+Sabemos que o temos al tem 0x41("A") então sabemos que não são iguais e o código diz o seguinte. Vamos relembrar aqui;</p>
+
+<pre><blockquote><code>
+347  804845b: 3c 31                 cmp    al,0x31
+348  804845d: 74 0a                 je     8048469 <__isoc99_scanf@plt+0xf9>
+349  804845f: b8 00 00 00 00        mov    eax,0x0
+350  8048464: e9 8c 00 00 00        jmp    80484f5 <__isoc99_scanf@plt+0x185>
+</code></blockquote></pre>
+
+<p>JE(Jump if Equal)Se AL for igual a 0x31 ele pula para 8048469 como não é igual ele mov 0x0 para eax e pula(JMP=JUMP) para 80484f5. que se procurarmos no código da função que estamos podemos ver que é o final dela. na liinha 386.</p>
+<p>E agora o que faremos já que não são iguais e ele vai sair da função? Vamos fazer serem iguais. usando o comando set.</p>
+
+<pre><blockquote><code>
+gdb-peda$ set $al=0x31
+</code></blockquote></pre>
+<pre><blockquote><code>
+8048469: 0f b6 05 20 a0 04 08  movzx  eax,BYTE PTR ds:0x804a020
+352  8048470: 83 f0 34              xor    eax,0x34
+353  8048473: a2 20 a0 04 08        mov    ds:0x804a020,al
+</code></blockquote></pre>
+<p>assim seguimos para o jump condicional <strong>je</strong> e pulamos para o endeço um pouco abaixo 8048469.<br>
+Nesse endereço ele pega o que temos em 0x804a020 que já sabemos que o primeiro A que passamos e move para eax. Porém
+dessa vez ele não compara ele faz um xor com 0x34 que é 4 tabela ascii. Então fica assim 0x34 ^ 0x41 e o resultado fica em eax.<br><br>
+0x34 = 0110100<br>
+0x41 = 1000001<br>
+0x75 = 1110101<br>
+eax = 0x75</p>
+
+<p>Após isso ele move o que temos em AL para o 0x804a020 que tinha nosso A antes. Mas tenha em mente que ele faz o xor achando que está fazendo com o caractere correto, onde ele deve conferir mais pra frente. então vamos guardar esses valores.</p>
+
+<p>Vamos para o pŕoximo passo.</p>
+<pre><blockquote><code>
+354  8048478: 0f b6 05 22 a0 04 08  movzx  eax,BYTE PTR ds:0x804a022
+355  804847f: 83 f0 32              xor    eax,0x32
+356  8048482: a2 22 a0 04 08        mov    ds:0x804a022,al
+</code></blockquote></pre>
+
+<p>Pegamos o nosso terceiro A que está dentro de 0x804a022 e movemos para eax, fazemos xor com 0x32. e colocamos o novo valor em 0x804a022.<br>
+0x41 = 1000001<br>
+0x88 = 0110010<br>
+0x73 = 1110011<br></p>
+
+<p>Seguindo... Dessa vez pegamos 0x804a023 e colocamos em eax, porém faz o xor com 0xffffff88, mas repare que ele continua manda apenas al de volta. Entã ele fez o xor com 0x88. Então o resultado fica:<br>
+0x41 = 01000001<br>
+0x88 = 10001000<br>
+0xc9 = 11001001<br></p>
+
+<pre><blockquote><code>
+357  048487: 0f b6 05 23 a0 04 08  movzx  eax,BYTE PTR ds:0x804a023
+358  04848e: 83 f0 88              xor    eax,0xffffff88
+359  048491: a2 23 a0 04 08        mov    ds:0x804a023,al
+</code></blockquote></pre>
+
+<p>Após isso, ele faz o mesmo processo de mover para eax, dessa vez o que está em 0x804a024 mas ele compara com 0x58("X") que já sabemos que não é igual pois temos 0x41 então precisamos que ele seja igual e vamos usar novamente o comando set para que ele não mova 0x0 para eax e saia da função.<p>
+<pre><blockquote><code>
+359  048491: a2 23 a0 04 08        mov    ds:0x804a023,al
+360  048496: 0f b6 05 24 a0 04 08  movzx  eax,BYTE PTR ds:0x804a024
+361  04849d: 3c 58                 cmp    al,0x58
+362  04849f: 74 07                 je     80484a8 <__isoc99_scanf@p    lt+0x138>
+363  80484a1: b8 00 00 00 00       mov    eax,0x0
+364  80484a6: eb 4d                jmp    80484f5 <__isoc99_scanf@plt+0x185
+</code></blockquote></pre>
+
+<p>Então ele faz um brincadeira com a gente movendo o valor de 0x804a025 para eax e faz test al, al. sabemos que vai passar porque ele já está testando a mesma coisa.</p>
+
+<pre><blockquote><code>
+365  80484a8: 0f b6 05 25 a0 04 08  movzx  eax,BYTE PTR ds:0x804a025
+366  80484af: 84 c0                 test   al,al
+367  80484b1: 74 07                 je     80484ba <__isoc99_scanf@plt+0x14a    >
+368  80484b3: b8 00 00 00 00        mov    eax,0x0
+369  80484b8: eb 3b                 jmp    80484f5 <__isoc99_scanf@plt+0x185    >
+</code></blockquote></pre>
+
+<p>Até aqui sabemos que nosso endereço agora está com:<br>
+0x804a020 = 0x75 "u" | xor com 0x34 <br>
+0x804a021 = 0x41 "A" | comparado com 0x31 = 1<br>
+0x804a022 = 0x73 "s" | xor com 0x32<br>
+0x804a023 = 0xc9 " " | xor com 0x88<br>
+0x804a024 = 0x41 "A" | comparado com 0x58 = X<br>
+
+Até aqui sabemos apenas que temos duas letras a 1 e a X pois ele não fez xor com qualquer coisa que passamos. Vamos seguindo e ver onde isso vai dar.</p>
+
+<pre><blockquote><code>
+370  80484ba: 0f b6 05 22 a0 04 08  movzx  eax,BYTE PTR ds:0x804a022
+371  80484c1: 3c 7c                 cmp    al,0x7c
+372  80484c3: 74 07                 je     80484cc <__isoc99_scanf@plt+0x15c>
+373  80484c5: b8 00 00 00 00        mov    eax,0x0
+374  80484ca: eb 29                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+</code></blockquote></pre>
+
+<p>Agora ele compara o que temos em 0x804a022 com 0x7c se igual continua se não sai da função. Então seta o valor pra passar.</p>
+<pre><blockquote><code>
+375  80484cc: 0f b6 05 20 a0 04 08  movzx  eax,BYTE PTR ds:0x804a020
+376  80484d3: 3c 78                 cmp    al,0x78
+377  80484d5: 74 07                 je     80484de <__isoc99_scanf@plt+0x16e>
+378  80484d7: b8 00 00 00 00        mov    eax,0x0
+379  80484dc: eb 17                 jmp    80484f5 <__isoc99_scanf@plt+0x185>
+</code></blockquote></pre>
+
+<p> Agora ele compara a primeira letra da nossa string que está em 0x804a020 com 0x78.</p>
+<pre><blockquote><code>
+380  80484de: 0f b6 05 23 a0 04 08  movzx  eax,BYTE PTR ds:0x804a023
+381  80484e5: 3c dd                 cmp    al,0xdd
+382  80484e7: 74 07                 je     80484f0 <__isoc99_scanf@plt+0x180    >
+383  80484e9: b8 00 00 00 00        mov    eax,0x0
+384  80484ee: eb 05                 jmp    80484f5 <__isoc99_scanf@plt+0x185    >
+385  80484f0: b8 01 00 00 00        mov    eax,0x1
+</code></blockquote></pre>
+
+<p>Agora comparamos com 0xdd! e se o resultado for verdadeiro ele mov 0x1 para eax e sai se não move 0x0 e sai. Ao sair da função a primeira instrução testa se eax é igual a 1 que passamos direitinho e sabemos que é verdadeiro :D. Então ele vai para a chamada da função <strong>0x80484f7</strong></p>
+<pre><blockquote><code>
+388  80484f7: 55                    push   ebp
+389  80484f8: 89 e5                 mov    ebp,esp
+390  80484fa: 83 ec 18              sub    esp,0x18
+391  80484fd: c7 44 24 08 09 00 00  mov    DWORD PTR [esp+0x8],0x9
+392  8048504: 00
+393  8048505: c7 44 24 04 53 86 04  mov    DWORD PTR [esp+0x4],0x8048653
+394  804850c: 08
+395  804850d: c7 04 24 01 00 00 00  mov    DWORD PTR [esp],0x1
+396  8048514: e8 47 fe ff ff        call   8048360 <write@plt>
+397  8048519: c9                    leave
+398  804851a: c3                    ret
+</code></blockquote></pre>
+
+<p>Essa função imprime Correct!</p>
+<p>Mas Qual a string para ganhar correct sem debugar?Simples só fazermos o xor com o que comparado no final:</p>
+
+0x804a020 = 0x75 "u" | xor com 0x34 | 0x34 ^ 0x78 = 0x4c = "L"<br>
+0x804a021 = 0x41 "A" | comparado com 0x31 = 1<br>
+0x804a022 = 0x73 "s" | xor com 0x32 | 0x32 ^ 0x7c = 0x4e = "N"<br> 
+0x804a023 = 0xc9 " " | xor com 0x88 | 0x88 ^ 0xdd = 0x55 = "U"<br>
+0x804a024 = 0x41 "A" | comparado com 0x58 = X<br></p>
+
+<p>Flag: L1NUX</p>
+
+<pre><blockquote><code>
+➜  reversingKR ./Easy_ELF     
+Reversing.Kr Easy ELF
+
+L1NUX
+Correct!
+</code></blockquote></pre>
+  <h3>Referências</h3>
+    <ul>
+      <li><a href="https://segurancainformacao.wordpress.com/2008/12/10/introducao-a-criptografia-2/" target="_blank">Xor Cipher</a></li>
+      <li><a href="http://www.inf.ufsc.br/~j.guntzel/isd/isd2.pdf" target="_blank">Álgebra Booleana</a></li> 
+    </ul>
+    <br><br>
+
+
+<strong>Done! Happy code!</strong>
+    </div>
+  </div>
+  </div>
+  <footer id="footer">
+    <p class="copyright">Hack The Planet!</p>
+    <!-- Thanks to <a href="http://www.webmaster-source.com">Matt Harzewski</a> for the theme!!!</p> -->
+  </footer>
+  <script src="../../files/jquery.min.js"></script>
+  <script src="../../files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+    });
+  </script>
+</body></html>

@@ -45,7 +45,7 @@ Easy_ELF: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically 
 for GNU/Linux 2.6.15, BuildID[sha1]=8edb9e400a3882319cd4582f89dd2373b7e1745c, stripped
       </code></blockquote></pre>
 
-      <p>Podemos ver que nosso binário é um ELF de 32-bits, <strong>dynamically linked</strong> e <strong>stripped</strong>. Dynamically linked quer dizer que o binário precisa de componentes externos para executar diferente dos binários estáticos que que as bibliotecas são são incluidas no próprio binário, tornando maiores porém mais portáveis.<br>
+      <p>Podemos ver que nosso binário é um ELF de 32-bits, <strong>dynamically linked</strong> e <strong>stripped</strong>. Dynamically linked quer dizer que o binário precisa de componentes externos para executar diferente dos binários estáticos que que as bibliotecas são incluídas no próprio binário, tornando maiores porém mais portáveis.<br>
       Para ver quais a bibliotecas usadas podemos usar o comando ldd.</p>
       <pre><blockquote><code>
 ➜  reversingKR ldd Easy_ELF         
@@ -111,7 +111,7 @@ Ponto de parada 1 at 0x804851b
 
 gdb-peda$ run
 </code></blockquote></pre>
-<p>Beleza agora vamos analisar o código em assembly e entender o que o programa está fazendo. Estou usando a syntax intel. E númeri as linhas aqui pra ficar mais simples na hora de falar sobre o que está acontecendo e inicia na 399 porque salvei a saída do objdump em um arquivo de texto e estou printando a função main.</p>
+<p>Beleza agora vamos analisar o código em assembly e entender o que o programa está fazendo. Estou usando a syntax intel. E númerei as linhas aqui pra ficar mais simples na hora de falar sobre o que está acontecendo e inicia na 399 porque salvei a saída do objdump em um arquivo de texto e estou printando a função main.</p>
 
 <pre><blockquote><code>
 399  804851b: 55                    push   ebp
@@ -227,8 +227,8 @@ gdb-peda$ x/s 0x804a020
 0x804a023 = "A"<br>
 0x804a024 = "A"<br></p>
 
-<p>na linha 346 ele pega o que está dentro de 0x804a021 e põe em eax, depois ele compara o que temos em al(eax(32bits)=ah(8bits)+al(8bits)) com 0x31(1). Tu pode conferir o que é abrindo a tabela ascii com o comando <strong>man ascii</strong>.<br>
-Sabemos que o temos al tem 0x41("A") então sabemos que não são iguais e o código diz o seguinte. Vamos relembrar aqui;</p>
+<p>na linha 346 ele pega o que está dentro de 0x804a021 e põe em eax, depois ele compara o que temos em al(EAX(32bits) = AL(16bits) = AH(8bits) + AL (8bits)) com 0x31(1). Tu pode conferir o que é abrindo a tabela ascii com o comando <strong>man ascii</strong>.<br>
+Sabemos que em al temos 0x41("A") então sabemos que não são iguais e o código diz o seguinte. Vamos relembrar aqui;</p>
 
 <pre><blockquote><code>
 347  804845b: 3c 31                 cmp    al,0x31
@@ -270,7 +270,7 @@ eax = 0x75</p>
 0x88 = 0110010<br>
 0x73 = 1110011<br></p>
 
-<p>Seguindo... Dessa vez pegamos 0x804a023 e colocamos em eax, porém faz o xor com 0xffffff88, mas repare que ele continua manda apenas al de volta. Entã ele fez o xor com 0x88. Então o resultado fica:<br>
+<p>Seguindo... Dessa vez pegamos 0x804a023 e colocamos em eax, porém faz o xor com 0xffffff88, mas repare que ele continua movendo apenas al de volta. Entã ele fez o xor com 0x88. O resultado será:<br>
 0x41 = 01000001<br>
 0x88 = 10001000<br>
 0xc9 = 11001001<br></p>

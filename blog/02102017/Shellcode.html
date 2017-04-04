@@ -29,15 +29,71 @@
   <div id="content">
     <div id="blog-archives">
 	    <h1><strong>Shellcodes</strong></h1>
-      <h2>Construindo shellcode em asm 64</h2>
+      <h3>Construindo shellcode em asm 64</h3>
 
       <p> Todo mundo ama shellcode, acho que isso é um fato. Eu também curto pra caramba, então resolvi aprender de verdade e parar de ficar catando shellcodes por esse mundão chamado internet.</p>
 
-      <p>O primeiro local que eu vi falando sobre shellcode foi em uma zine no site do meu chará Mercês. O site é o <a href="http://mentebinaria.com.br/" target="_blank">Mente binária</a> Vou deixar o link do artigo nas referências desse post.</p> O artigo foi escrito pelo Victor Ramos Mello aka <a href="https://github.com/m0nad" target="_blank">m0nad</a>
+      <p>O primeiro local que eu vi falando sobre shellcode foi em uma zine chamada Congumelo Binário. Vou deixar o link do artigo nas referências desse post.</p> O artigo foi escrito pelo Victor Ramos Mello aka <a href="https://github.com/m0nad" target="_blank">m0nad</a>
 
-      <p>Achei maneiro pra caramba, mas como o próprio mercÊs disse em um dos videos no canal dele, o melhor jeito para aprender é em frente ao computador e testando...Apois imprimir o artigo e fui praticar. Mas quando iniciei percebi que o assembly usado é x86, isso não é algo ruim, mas na hora de fazer no meu computador as coisas não sairam tão bem quanto estavam escrita, então resolvi pegar a ideia e escrever em 64 bits que foi como eu aprendi e que 
+      <p>Achei maneiro pra caramba, mas ele fala apenas sobre x86, então após aprender com esse paper, resolvi explicar em 64, já que vivemos em um mundo movido a 64bits. A primeira diferença é a ordem em que devem ser passados os paramêtros, mas vamos ver isso mais pra frente. O M0nad também usa a syntax AT&T, e como eu aprendi asm usando a syntax intel, vou usar ela aqui, só por questão de gosto mesmo(leia-se preguiça).</p>
 
+    <h3>O que são Shellcodes?</h3>
+    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em sofwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits já deve ter visto bastante, shellcodes tem esse nome, porque geralmente tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimal dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
 
+    <h3>Quais as ferramentas serão usadas?</h3>
+    <p>Como vou usar a syntax Intel então vou usar o montador Nasm<br>
+    <strong>ld</strong> para linkar<br>
+    <strong>gcc</strong> para compilar nosso código em C<br>
+    <strong>objdump</strong> para visualizar o arquivo objeto<br>
+    <strong>ruby</strong> para fazer reverse de string(em hex)<br>
+    <strong>Linux 64 bits</strong> como ambiente e Sistema Operacional alvo</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ uname -a
+Linux labs 4.9.14-200.fc25.x86_64 #1 SMP Mon Mar 13 19:26:40 UTC 2017   x86_64 x86_64 x86_64 GNU/Linux
+
+n3k00n3@labs:~$ nasm -v 
+NASM version 2.12.02 compiled on Jul 14 2016
+
+n3k00n3@labs:~$ ld -v
+GNU ld version 2.26.1-1.fc25
+
+n3k00n3@labs:~$ ruby -v
+ruby 2.3.3p222 (2016-11-21 revision 56859) [x86_64-linux]
+
+n3k00n3@labs:~$ ruby -v
+gcc version 6.3.1 20161221 (Red Hat 6.3.1-1) (GCC)
+    </blockquote></code></pre>
+
+    <h3>System Calls Linux</h3>
+    <p>Chamadas de sistemas é a interface entre aplicação e o kernel.<br>
+    Tu pode ver aqui:</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ cat /usr/include/asm/unistd_64.h 
+    </blockquote></code></pre>
+
+    <p>Tu também pode ver para 32 bits em unistd_32.h</p>
+
+    <h3>exit(0)</h3>
+    <p>Vamos iniciar com um exemplo simples da chamada exit(0)</p>
+    <p> Primeiro vamos pegar o número dessa syscall dando um grep para não ter que ler todo o arquivo.</p>
+    <blockquote><code><pre>
+#define __NR_exit 60
+#define __NR_exit_group 231
+    </blockquote></code></pre>
+
+    <p>Agora que sabemos que é 60 vamos construir nosso shellcode, passando os argumentos para os registradores de própositos gerais que na arquitetura de 64 bits é RAX(valor syscall), RDI, RSI, RDX, R10, R8, R9.</p>
+
+    <pre><code><blockquote>
+global _start
+
+section .text
+_start:
+    mov rax, 60
+    mov rdi, 0x0
+    syscall
+    </blockquote></code></pre>
       <br><br>
       <strong>Done! Happy code!</strong>
     </div>

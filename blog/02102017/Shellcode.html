@@ -79,6 +79,7 @@ n3k00n3@labs:~$ cat /usr/include/asm/unistd_64.h
     <p>Vamos iniciar com um exemplo simples da chamada exit(0)</p>
     <p> Primeiro vamos pegar o número dessa syscall dando um grep para não ter que ler todo o arquivo.</p>
     <blockquote><code><pre>
+n3k00n3@labs:~$  grep exit /usr/include/asm/unistd_64.h 
 #define __NR_exit 60
 #define __NR_exit_group 231
     </blockquote></code></pre>
@@ -94,7 +95,217 @@ _start:
     mov rdi, 0x0
     syscall
     </blockquote></code></pre>
-      <br><br>
+    <p>Certo, agora vamos compilar nosso código.</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ nasm -felf64 asm_exit_linux64.asm -o shellcode.o
+    </blockquote></code></pre>
+
+    <p>Repare que eu passei o nome do arquivo de saída como shellcode.o se tu não passar, ele será salvo com o mesmo nome do arquivo .asm porém com o .o <br>
+    Agora vamos linkar nosso arquivo objeto.</p>
+    <pre><code><blockquote>
+n3k00n3@labs:~$ ld shellcode.o shellcode
+    </blockquote></code></pre>
+
+    <p>Agora que já montamos e linkamos, resta execurtamos para ver se está ok nosso programinha em assembly</p>
+    <pre><code><blockquote>
+n3k00n3@labs:~$ ./shellcode
+</blockquote></code></pre>
+
+    <p>Vocês devem ter reparado que não aconteceu absolutamente nada, pelo menos não foi possível ver. Mas não existe nenhum output no nosso programa, então de certa forma já era experado, vamos usar o ltrace para ver se nosso exit foi executado mesmo.</p>
+
+     <pre><code><blockquote>
+n3k00n3@labs:~$ strace ./shellcode
+execve("./shellcode", ["./shellcode"], [/* 57 vars */]) = 0
+exit(0)                                 = ?
++++ exited with 0 +++
+    </pre></code></blockquote>    
+
+    <p>Great! nosso código rodou, a syscall exit(0) foi executada, hora de olhar e pegar os opcodes com objdump e depois testar nosso shellcode.</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ objdump -M intel -D shellcode.o 
+
+shellcode.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+   0:	b8 3c 00 00 00       	mov    eax,0x3c
+   5:	bf 00 00 00 00       	mov    edi,0x0
+   a:	0f 05                	syscall
+    </pre></code></blockquote>
+
+    <p> onde tem b8, 3c, 00, 00, 00... Esse são os opcodes do nosso código, vamos agora pegar eles de um forma melhor, pois agora tem poucos mas em breve vai ter muito mais e fazer isso um por um não é tão elegante nem criativo.</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ for i in $(objdump -D shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\xb8\x3c\x00\x00\x00\xbf\x00\x00\x00\x00\x0f\x05
+    </pre></code></blockquote>
+
+    <p>Agora só pegar os opcodes e colar no nosso código de teste.</p>
+    <pre><code><blockquote>
+#include<stdio.h>
+#include<string.h>
+
+unsigned char code[] = \
+"\xb8\x3c\x00\x00\x00\xbf\x00\x00\x00\x00\x0f\x05";
+
+int main()
+{
+
+	printf("Shellcode Length:  %d\n", (int)strlen(code));
+
+	int (*ret)() = (int(*)())code;
+
+	ret();
+
+}
+
+</pre></code></blockquote>
+    <p>Rodando e verificando com strace</p>
+
+<pre><code><blockquote>
+
+n3k00n3@labs:~$ gcc -fno-stack-protector -z execstack testing.c -o testing
+
+n3k00n3@labs:~$ ./testing
+Shellcode Length:  2
+
+n3k00n3@labs:~$strace ./testing
+execve("./testing", ["./testing"], [/* 57 vars */]) = 0
+brk(NULL)                               = 0x1eef000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbf531bb000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=96774, ...}) = 0
+mmap(NULL, 96774, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fbf531a3000
+close(3)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \5\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2115824, ...}) = 0
+mmap(NULL, 3955040, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbf52bd2000
+mprotect(0x7fbf52d8f000, 2093056, PROT_NONE) = 0
+mmap(0x7fbf52f8e000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bc000) = 0x7fbf52f8e000
+mmap(0x7fbf52f94000, 14688, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fbf52f94000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbf531a1000
+arch_prctl(ARCH_SET_FS, 0x7fbf531a1700) = 0
+mprotect(0x7fbf52f8e000, 16384, PROT_READ) = 0
+mprotect(0x600000, 4096, PROT_READ)     = 0
+mprotect(0x7fbf531bd000, 4096, PROT_READ) = 0
+munmap(0x7fbf531a3000, 96774)           = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+brk(NULL)                               = 0x1eef000
+brk(0x1f10000)                          = 0x1f10000
+brk(NULL)                               = 0x1f10000
+write(1, "Shellcode Length:  2\n", 21Shellcode Length:  2
+)  = 21
+exit(0)                                 = ?
++++ exited with 0 +++
+</blockquote></code></pre>
+
+<p>Massa, nosso código funcionou bacana! Aprendemos como eles basicamente funcionam vamos agora melhorar nosso código que como podemos ver tem muitos bytes nullos também conhecidos NULLBYTES e eles costumam atrapalhar nossos exploits. Vamos refazer o código sem gerar esse nullbytes. Percebam que para saber como não gerar esses bytes nulos, você precisa conhecer bem de assembly, quais instruções geram menos opcodes também, pois quanto menor, melhor.<p>
+<pre><code><blockquote>
+global _start
+
+section .text
+_start:
+    xor rax, rax
+    mov al, 60
+    xor rdi, rdi
+    syscall
+</blockquote></code></pre>
+<p>Compilando e lendo opcodes...
+
+<pre><code><blockquote>
+n3k00n3@labs:~$ nasm -felf64 asm_nbf_exit_linux64.asm -o shellcode.o
+
+n3k00n3@labs:~$ objdump -M intel -D shellcode.o 
+
+shellcode.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+   0:	48 31 c0             	xor    rax,rax
+   3:	b0 3c                	mov    al,0x3c
+   5:	48 31 ff             	xor    rdi,rdi
+   8:	0f 05                	syscall 
+
+</blockquote></code></pre>
+
+<p>Agora que removemos os nullbytes vamos, pegar só os opcodes e testa-los novamente...</p>
+
+<pre><code><blockquote>
+n3k00n3@labs:~$ nasm -felf64 asm_nbf_exit_linux64.asm -o shellcode.o
+
+n3k00n3@labs:~$ objdump -M intel -D shellcode.o 
+
+shellcode.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+   0:	48 31 c0             	xor    rax,rax
+   3:	b0 3c                	mov    al,0x3c
+   5:	48 31 ff             	xor    rdi,rdi
+   8:	0f 05                	syscall 
+n3k00n3@labs:~$ for i in $(objdump -D shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\x48\x31\xc0\xb0\x3c\x48\x31\xff\x0f\x05
+
+n3k00n3@labs:~$ vim testing.c 
+
+n3k00n3@labs:~$ gcc -fno-stack-protector -z execstack testing.c -o testing
+
+n3k00n3@labs:~$ ./testing 
+Shellcode Length:  10
+
+n3k00n3@labs:~$ strace ./testing
+execve("./testing", ["./testing"], [/* 57 vars */]) = 0
+brk(NULL)                               = 0x180e000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9c26226000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=96774, ...}) = 0
+mmap(NULL, 96774, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f9c2620e000
+close(3)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \5\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2115824, ...}) = 0
+mmap(NULL, 3955040, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f9c25c3d000
+mprotect(0x7f9c25dfa000, 2093056, PROT_NONE) = 0
+mmap(0x7f9c25ff9000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bc000) = 0x7f9c25ff9000
+mmap(0x7f9c25fff000, 14688, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f9c25fff000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9c2620c000
+arch_prctl(ARCH_SET_FS, 0x7f9c2620c700) = 0
+mprotect(0x7f9c25ff9000, 16384, PROT_READ) = 0
+mprotect(0x600000, 4096, PROT_READ)     = 0
+mprotect(0x7f9c26228000, 4096, PROT_READ) = 0
+munmap(0x7f9c2620e000, 96774)           = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+brk(NULL)                               = 0x180e000
+brk(0x182f000)                          = 0x182f000
+brk(NULL)                               = 0x182f000
+write(1, "Shellcode Length:  10\n", 22Shellcode Length:  10
+) = 22
+exit(0)                                 = ?
++++ exited with 0 +++
+
+</blockquote></code></pre>
+
+<p>Great Work!</p>
+
+<h3>Obtendo uma Shell</h3>
+
+
+
+
+<br><br>
       <strong>Done! Happy code!</strong>
     </div>
   </div>

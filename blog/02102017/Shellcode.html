@@ -38,7 +38,7 @@
       <p>Achei maneiro pra caramba, mas ele fala apenas sobre x86, então após aprender com esse paper, resolvi explicar em 64, já que vivemos em um mundo movido a 64bits. A primeira diferença é a ordem em que devem ser passados os paramêtros, mas vamos ver isso mais pra frente. O M0nad também usa a syntax AT&T, e como eu aprendi asm usando a syntax intel, vou usar ela aqui, só por questão de gosto mesmo(leia-se preguiça).</p>
 
     <h3>O que são Shellcodes?</h3>
-    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em sofwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits já deve ter visto bastante, shellcodes tem esse nome, porque geralmente tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimal dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
+    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em sofwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits já deve ter visto bastante, shellcodes tem esse nome, porque geralmente tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimais dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
 
     <h3>Quais as ferramentas serão usadas?</h3>
     <p>Como vou usar a syntax Intel então vou usar o montador Nasm<br>
@@ -67,13 +67,13 @@ gcc version 6.3.1 20161221 (Red Hat 6.3.1-1) (GCC)
 
     <h3>System Calls Linux</h3>
     <p>Chamadas de sistemas é a interface entre aplicação e o kernel.<br>
-    Tu pode ver aqui:</p>
+    Pode-se ver aqui:</p>
 
     <pre><code><blockquote>
 n3k00n3@labs:~$ cat /usr/include/asm/unistd_64.h 
     </blockquote></code></pre>
 
-    <p>Tu também pode ver para 32 bits em unistd_32.h</p>
+    <p>Você também pode ver para 32 bits em unistd_32.h</p>
 
     <h3>exit(0)</h3>
     <p>Vamos iniciar com um exemplo simples da chamada exit(0)</p>
@@ -112,7 +112,7 @@ n3k00n3@labs:~$ ld shellcode.o shellcode
 n3k00n3@labs:~$ ./shellcode
 </blockquote></code></pre>
 
-    <p>Vocês devem ter reparado que não aconteceu absolutamente nada, pelo menos não foi possível ver. Mas não existe nenhum output no nosso programa, então de certa forma já era experado, vamos usar o ltrace para ver se nosso exit foi executado mesmo.</p>
+    <p>Vocês devem ter reparado que não aconteceu absolutamente nada, pelo menos não foi possível ver. Mas não existe nenhum output no nosso programa, então de certa forma já era experado, vamos usar o strace para ver se nosso exit foi executado mesmo.</p>
 
      <pre><code><blockquote>
 n3k00n3@labs:~$ strace ./shellcode
@@ -137,7 +137,7 @@ Disassembly of section .text:
    a:	0f 05                	syscall
     </pre></code></blockquote>
 
-    <p> onde tem b8, 3c, 00, 00, 00... Esse são os opcodes do nosso código, vamos agora pegar eles de um forma melhor, pois agora tem poucos mas em breve vai ter muito mais e fazer isso um por um não é tão elegante nem criativo.</p>
+    <p> onde tem b8, 3c, 00, 00, 00... Esse são os opcodes do nosso código, vamos agora pegar eles de um forma melhor, pois agora temos poucos mas em breve teremos muitos, e fazer isso um por um não é tão elegante nem criativo.</p>
 
     <pre><code><blockquote>
 n3k00n3@labs:~$ for i in $(objdump -D shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
@@ -206,7 +206,7 @@ exit(0)                                 = ?
 +++ exited with 0 +++
 </blockquote></code></pre>
 
-<p>Massa, nosso código funcionou bacana! Aprendemos como eles basicamente funcionam vamos agora melhorar nosso código que como podemos ver tem muitos bytes nullos também conhecidos NULLBYTES e eles costumam atrapalhar nossos exploits. Vamos refazer o código sem gerar esse nullbytes. Percebam que para saber como não gerar esses bytes nulos, você precisa conhecer bem de assembly, quais instruções geram menos opcodes também, pois quanto menor, melhor.<p>
+<p>Massa, nosso código funcionou bacana! Aprendemos como eles basicamente funcionam, vamos agora melhorar nosso código, que, como podemos ver tem muitos bytes nullos, também conhecidos NULLBYTES e eles costumam atrapalhar nossos exploits. Vamos refazer o código sem gerar esse nullbytes. Percebam que para saber como não gerar esses bytes nulos, você precisa conhecer bem de assembly, quais instruções geram menos opcodes também, pois quanto menor, melhor.<p>
 <pre><code><blockquote>
 global _start
 
@@ -237,7 +237,7 @@ Disassembly of section .text:
 
 </blockquote></code></pre>
 
-<p>Agora que removemos os nullbytes vamos, pegar só os opcodes e testa-los novamente...</p>
+<p>Agora que removemos os nullbytes, vamos pegar só os opcodes e testa-los novamente...</p>
 
 <pre><code><blockquote>
 n3k00n3@labs:~$ nasm -felf64 asm_nbf_exit_linux64.asm -o shellcode.o
@@ -300,11 +300,72 @@ exit(0)                                 = ?
 
 <p>Great Work!</p>
 
-<h3>Obtendo uma Shell</h3>
+<h3>Que tal um output simples?</h3>
+<p>Agora temos um noção muito melhor de como construir shellcodes, vamos construir um novo sem nullbytes de um código que apenas vai mostrar "Hello world" na tela e sair. vamos usar a técnica que passa nossa string para a stack e depois para o registrador correto. Existem mais técnicas que podem ser usadas, procurem por elas, aprenda e escreva bastante, pois só assim, esse conhecimento será fixado de maneira que tu não esqueça daqui a uma semana.</p>
 
+<p> Primeiro temos que pegar os cada letra em hexadecimal e na ordem reversa, já que estamos trabalhando com arquitetura x86_64 e ela é Little Endian. Vamos aproveitar também e pegar o tamanho da nossa string e adicionar mais +1, para 0x0a(Consulte a tabela ascii com: man ascii). Também precisamos saber qual a syscall que escreve na tela.</p>
+<pre><code><blockquote>
+n3k00n3@labs:~$ ruby -e '"Hello word\n".reverse.each_byte {|x| print x.to_s(16)}'
+a64726f77206f6c6c6548
 
+n3k00n3@labs:~$ ruby -e 'print "Hello world\b".length'
+12
 
+n3k00n3@labs:~$ grep write /usr/include/asm/unistd_64.h 
+#define __NR_write 1
 
+</blockquote></code></pre>
+
+<p>Nosso código do helloword!</p>
+
+<blockquote><code><pre>
+section .text
+global _start
+
+    _start:
+        xor rax, rax
+        inc rax
+        mov rdi, rax
+        push 0x0a646c72
+        mov rbx, 0x6f57206f6c6c6548
+        push rbx
+        mov rsi, rsp
+        mov rdx, rdi
+        add rdx, 0xb
+        syscall
+
+        xor rax, rax
+        add rax, 60
+        xor rdi, rdi
+        syscall
+</pre></code></blockquote>
+
+<p>Montando e linkando, testando...</p>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ nasm asm_helloword.asm -o shellcode.o
+n3k00n3@labs:~$ !ld
+n3k00n3@labs:~$ ./shellcode
+</pre></code></blockquote>
+
+<p>Funcionou! Vamos pegar os opcodes e testar nosso shellcode.</p>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ for i in $(objdump -d shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\x48\x31\xc0\x48\xff\xc0\x48\x89\xc7\x68\x72\x6c\x64\x0a\x48\xbb\x48\x65\x6c\x6c\x6f\x20\x57\x6f\x53\x48\x89\xe6\x48\x89\xfa\x48\x83\xc2\x0b\x0f\x05\x48\x31\xc0\x48\x83\xc0\x3c\x48\x31\xff\x0f\x05
+</pre></code></blockquote>
+
+<p>Não vou colar aqui novamente o codigo de teste, mas já vimos como fazer, então é só fazer.</p>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ ./testing
+Shellcode Length:  49
+Hello World
+</pre></code></blockquote>
+
+<p>Great work!</p>
+
+<h3>Hora de fazer jus ao nome SHELLCODE</p>
 <br><br>
       <strong>Done! Happy code!</strong>
     </div>

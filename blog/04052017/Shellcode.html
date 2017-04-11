@@ -38,7 +38,7 @@
       <p>Achei maneiro pra caramba, mas ele fala apenas sobre x86, então após aprender com esse paper, resolvi explicar em 64, já que vivemos em um mundo movido a 64bits. A primeira diferença é a ordem em que devem ser passados os paramêtros, mas vamos ver isso mais pra frente. O M0nad também usa a syntax AT&T, e como eu aprendi asm usando a syntax intel, vou usar ela aqui, só por questão de gosto mesmo(leia-se preguiça).</p>
 
     <h3>O que são Shellcodes?</h3>
-    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em sofwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits, já deve ter visto bastante. Shellcodes tem esse nome, porque na maioria dos casos tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimais dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
+    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em softwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits, já deve ter visto bastante. Shellcodes tem esse nome, porque na maioria dos casos tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimais dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
 
     <h3>Quais as ferramentas serão usadas?</h3>
     <p>Como vou usar a syntax Intel então vou usar o montador Nasm<br>
@@ -146,8 +146,8 @@ n3k00n3@labs:~$ for i in $(objdump -D shellcode.o -M intel |grep "^ " |cut -f2);
 
     <p>Agora só pegar os opcodes e colar no nosso código de teste.</p>
     <pre><code><blockquote>
-#include<stdio.h>
-#include<string.h>
+#include &#60;stdio.h&#62;
+#include &#60;string.h&#62;
 
 unsigned char code[] = \
 "\xb8\x3c\x00\x00\x00\xbf\x00\x00\x00\x00\x0f\x05";

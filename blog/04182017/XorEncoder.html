@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <title>n3k00n3| Labs</title>
+  <meta name="viewport" content="width=device-width">
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="../../files/style.css" rel="stylesheet">
+  <link href="../../files/colors-dark.css" rel="stylesheet">
+</head>
+<body>
+
+  <header id="header">
+    <a href="index.html"><img alt="n3k00n3 | Labs" src="../../files/logo.png"></a>
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../blog.html">Blog</a></li>
+		      <li><a href="../../links.html">Links</a></li>
+          <li><a href="../../about.html">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  <div id="content">
+    <div id="blog-archives">
+	    <h1><strong>Xor Encoder Shellcodes</strong></h1>
+      <h2></h2>
+      <p>Fala galerinha do bem!<br>
+      Agora que já temos uma noção melhor de como fazer shellcodes com nossas próprias mãos sem frameworks como msfvenom, que por sinal é bem bacana. Só que foge da nossa ideia de saber como as coisas funcionam por baixo, Low Level.</p>
+      <p>Hoje vamos dar continuidade a esses shellcodes, mas, só que agora vai ser em  uma maneira simples de obfuscar eles, a cripto que vamos usar é bem simples, entretanto é um bom  início, será a XOR já vimos um pouco dela em nosso <a href="../bla.html" target="_blank">Writeup sobre o Easy ELF do Reversing.kr</a>(Breve tem mais writeups). Só que  dessa vez vamos ver os detalhes de como ele funciona já que eu mostrei pouco no artigo anterior e indiquei uns links para ajudar. No entanto vamos ver como funciona usando duas linguagens bem distintas para construir nossos encoders, que são Assembly(Pra deixar o artigo mais interessante) e um código em ruby, pois ruby é elegante! </p>
+
+      <h2>Por quê ofusca-los?</h2>
+      <p>Pra que eles não sejam detecados pelos Firewalls e IDS que tentam pegar nossos meninos por assinatura. Então temos que usar um encoder para dificultar a situação deles(Não que nosso XOR encoder ajude muito), mas vai nos ajudar a enteder como funcionam que é o ideal do artigo.</p>
+
+      <h2> Xor(Ou Exclusivo) </h2>
+      <p>Xor é uma porta lógica assim como OR(ou), AND(&) como as que usamos nas operações booleanas. Nada melhor que uma tabela verdade para ficar mais claro</p>
+      <pre><center>
+----------------------------
+| Entradas       | Saídai  |
+|--------------------------|
+|    0   |   0   |   0     |
+|    0   |   1   |   1     |
+|    1   |   0   |   1     |
+|    1   |   1   |   0     |
+----------------------------
+      </center></pre>
+
+      <p>Massa, então vamos ver o que acontece quando usamos XOR em cada caractere da palavra 'n3k00n3' usando a palavra 'hacking' como senha.</p>
+
+      <pre><center>
+---------------------------------------------------
+|       hacking ^ n3k00n3     |        Saída      |
+---------------------------------------------------
+| h ^ n | 10000001 ^ 00000000 | 0x00 = 01010101   |
+| a ^ 3 |                     |                   |
+| c ^ k |                     |                   |
+| k ^ 0 |                     |                   |
+| i ^ 0 |                     |                   |
+| n ^ n |                     |                   |
+| g ^ 3 |                     |                   |
+---------------------------------------------------
+      </center></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+     <br><br> 
+      <hr>
+      <p>Referências:</p>
+      <ul>
+        <li><a href="" target="_blank"></a></li>
+        <li><a href="" target="_blank"></a></li>
+      </ul>
+
+      <br>
+      <strong>Done! Happy code!</strong>
+    </div>
+  </div>
+  </div>
+  <footer id="footer">
+    <p class="copyright">Hack The Planet!</p>
+    <!-- Thanks to <a href="http://www.webmaster-source.com">Matt Harzewski</a> for the theme!!!</p> -->
+  </footer>
+  <script src="../../files/jquery.min.js"></script>
+  <script src="../../files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+    });
+  </script>
+</body></html>

@@ -32,13 +32,13 @@
       <h2></h2>
       <p>Fala galerinha do bem!<br>
       Agora que já temos uma noção melhor de como fazer shellcodes com nossas próprias mãos sem frameworks como msfvenom, que por sinal é bem bacana. Só que foge da nossa ideia de saber como as coisas funcionam por baixo, Low Level.</p>
-      <p>Hoje vamos dar continuidade a esses shellcodes, mas, só que agora vai ser em  uma maneira simples de obfuscar eles, a cripto que vamos usar é bem simples, entretanto é um bom  início, será a XOR já vimos um pouco dela em nosso <a href="../bla.html" target="_blank">Writeup sobre o Easy ELF do Reversing.kr</a>(Breve tem mais writeups). Só que  dessa vez vamos ver os detalhes de como ele funciona já que eu mostrei pouco no artigo anterior e indiquei uns links para ajudar. No entanto vamos ver como funciona usando um código em ruby, pois ruby é elegante! </p>
+      <p>Hoje vamos dar continuidade a esses shellcodes, mas, agora vai ser em  uma maneira simples de obfuscar eles, a cripto que vamos usar é bem simples, entretanto é um bom  início, será a XOR. Já vimos um pouco dela em nosso <a href="../bla.html" target="_blank">Writeup sobre o Easy ELF do Reversing.kr</a>(Breve tem mais writeups). Só que  dessa vez vamos ver os detalhes de como ele funciona já que eu mostrei pouco no artigo anterior e indiquei uns links para ajudar. No entanto vamos ver como funciona usando um código em ruby, pois ruby é elegante! </p>
 
       <h2>Por quê ofusca-los?</h2>
-      <p>Pra que eles não sejam detecados pelos Firewalls e IDS que tentam pegar nossos meninos por assinatura. Então temos que usar um encoder para dificultar a situação deles(Não que nosso XOR encoder ajude muito), mas vai nos ajudar a enteder como funcionam que é o ideal do artigo.</p>
+      <p>Pra que eles não sejam detecados pelos Firewalls e IDS que tentam pegar nossos meninos por assinatura. Então temos que usar um encoder para dificultar a situação deles(Não que nosso XOR encoder ajude muito), mas vai nos ajudar a entender como funcionam que é o ideal do artigo.</p>
 
       <h2> Xor(Ou Exclusivo) </h2>
-      <p>Xor é uma porta lógica assim como OR(ou), AND(&)... Essa operação envolvendo dois operandos resultará em valor lógico verdadeiro se apenas um dos dois forem verdadeiros diferente de do ou comum que quando ambos são verdadeiros a resposta também é verdadeira. Nada melhor que uma tabela verdade para ficar mais claro</p>
+      <p>Xor é uma porta lógica assim como OR(ou), AND(&)... Essa operação envolvendo dois operandos resultará em valor lógico verdadeiro se apenas um dos dois forem verdadeiros diferente do ou comum que quando ambos são verdadeiros a resposta também é verdadeira. Nada melhor que uma tabela verdade para ficar mais claro</p>
       <pre><center>
 ----------------------------
 | Entradas       | Saídai  |

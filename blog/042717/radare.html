@@ -31,7 +31,7 @@
 	    <h1><strong>Radare2</strong></h1>
       <h2>em 20 Minutos</h2>
       <p>Final de semana passado aconteceu um CTF maneiro do PPP, com alguns desafios interessantes(Nvl Hard) de REV e eu perdi muito tempo com GDB e objdump para fazer algumas coisas que o radare2 facilita muito, além de mostrar de forma bonita para nossos olhos :D</p>
-      <p>Eu não sabia nada de radare até então, achei maneiro, logo ao iniciar fiquei perdido, mas percebi que estava bem mais perdido do que imaginava só  alguns minutos após te-lo iniciado. Por isso resolvi gastar um tempo aprendendo como usar e obter o melhor do mesmo.</p>
+      <p>Eu não sabia nada de radare até então, achei maneiro. Logo ao iniciar fiquei voando, mas percebi que estava bem mais perdido do que imaginava só  alguns minutos após te-lo iniciado. Por isso resolvi gastar um tempo aprendendo como usar e obter o melhor do mesmo.</p>
       <p> Foi então que eu decidir mostrar um pouco sobre ele, para que tu já adcione essa ferramenta em seu arsenal, pois é muito boa, sério muito boa mesmo.</p>
 
       <h2> O que é Radare</h2>
@@ -52,12 +52,12 @@ $ ./sys/install.sh
       <h2> Hora do show! BIRRL!</h2>
       <p>Agora que temos o r2 instalado vamos pegar um pequeno challenge pra aprender enquanto resolvemos ele, creio que assim fique mais divertido que apenas mostrar uma lista de comandos. Até porque é pra isso que existe a documentação.</p>
 
-      <p> Como na maioria das aplicações CLI a flag de help -h.</p>
+      <p> Como na maioria das aplicações CLI a flag de help é -h.</p>
       <blockquote><code><pre>
 $ r2 -h
       </pre></code></blockquote>
 
-      <p>Para te força a fazer, não irei mostrar a saída aqui.</p>
+      <p>Para te forçar a fazer, não irei mostrar a saída aqui.</p>
       <h3> Informação do Binário</h3>
 
       <p>Sempre que estamos frente a frente com um desafio a primeira coisa que fazemos é pegar umas informações sobre o binário certo? Então vamos usar o rabin2 que faz parte do framework. Rabin2 extrair informações úteis do binário como headers, seções, strings, entrypoints... e ainda permite exportar em vários formatos. Da um man rabin2 pra tu ver.</p>
@@ -65,10 +65,27 @@ $ r2 -h
       <p>Vamos usar esse binário para brincar!</p>
 
       <img src="../../files/images/rabin2.png" />
-      <p>Como podemos ver temos umas informações úteis como ELF32, not stripped, dinamically linked, não tem cripto...</p>
+      <p>Como podemos ver temos umas informações úteis como ELF32, not stripped, dinamically linked, não tem cripto... o comando <strong>i</strong> dentro do radare mostra as mesmas informações!</p>
 
-      <blockquote><p>PS: Não confie em ninguém, então não rode esses binários de maneira simples, coloque em um ambiente virtualizado, já que tu não conhece quem está por trás dos desafios. Nesse binário tu tem minha Dword de que não é malicioso!</p></blockquote>
-      <strong>Done! Happy code!</strong>
+      <blockquote><p>PS: Não confie em ninguém, então não rode esses binários que tu acha na net em sua máquina, coloque em um ambiente virtualizado, já que tu não conhece quem está por trás dos desafios. Nesse binário tu tem minha Dword de que não é malicioso!</p></blockquote>
+
+      <p>Vamos rodar o binário para ver o que acontece.</p>
+      <img src="../../files/images/Rodando.png" />
+      <p> Então, pelo visto temos que passar a password correta! Essa é a hora de examinarmos com ajuda do r2.</p>
+      <img src="../../files/images/r2.png" />
+      <p>O radare espera por entradas de comandos, ele também mostra um endereço que no nosso caso é 0x004004c0 isso o entrypoint  e onde estamos no momento. Para mais informações sobre Entrypoints usamos o comando 'ie' e para os symbolos globais iE. uma maneira de entender os comandos é usando '?'' após cada comando. Por exemplo para sabemos detalhes do comando info que é 'i' usamos e '?' ficando 'i?' Pra endentermos mais usamos a segunda letra e ? 'ie?'. Isso é bom que com o tempo você acaba entendendo melhor cada comando ao invés de tentar gravar todos de uma vez.</p>
+
+      <img src="../../files/images/info.png" />
+      <h2> Analisando o binário</h2>
+      <p>O Radare não faz uma análise no binário por ser uma parte complexa dependendo do tamanho do binário e tipo.</p>
+       <img src="../../files/images/a.png" />
+       <p>Geralmente uso a opção 'aa' analyse all. Tu também pode iniciar o radare já com a análise usando -A. Exemplo: 'r2 -A ./binary'.</p>
+
+       <img src="../../files/images/aa.png" />
+
+       <h2>Flags</h2>
+      <br>
+      <strong>Done! Happy Reverse!</strong>
     </div>
   </div>
   </div>

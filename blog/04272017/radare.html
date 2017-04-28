@@ -29,8 +29,8 @@
   <div id="content">
     <div id="blog-archives">
 	    <h1><strong>Radare2</strong></h1>
-      <h2>em 20 Minutos</h2>
-      <p>Final de semana passado aconteceu um CTF maneiro do PPP, com alguns desafios interessantes(Nvl Hard) de REV e eu perdi muito tempo com GDB e objdump para fazer algumas coisas que o radare2 facilita muito, além de mostrar de forma bonita para nossos olhos :D</p>
+      <h2>em 15 Minutos</h2>
+      <p>Final de semana passado aconteceu um CTF maneiro do PPP, com alguns desafios interessantes(Nvl Hard) de REV e eu perdi muito tempo com GDB e objdump(Eu costumava comentar todo o fluxo em um txt com saída do objdump) para fazer algumas coisas que o radare2 facilita muito, além de mostrar de forma bonita para nossos olhos :D</p>
       <p>Eu não sabia nada de radare até então, achei maneiro. Logo ao iniciar fiquei voando, mas percebi que estava bem mais perdido do que imaginava só  alguns minutos após te-lo iniciado. Por isso resolvi gastar um tempo aprendendo como usar e obter o melhor do mesmo.</p>
       <p> Foi então que eu decidir mostrar um pouco sobre ele, para que tu já adcione essa ferramenta em seu arsenal, pois é muito boa, sério muito boa mesmo.</p>
 
@@ -50,7 +50,7 @@ $ ./sys/install.sh
       </pre></code></blockquote>
 
       <h2> Hora do show! BIRRL!</h2>
-      <p>Agora que temos o r2 instalado vamos pegar um pequeno challenge pra aprender enquanto resolvemos ele, creio que assim fique mais divertido que apenas mostrar uma lista de comandos. Até porque é pra isso que existe a documentação.</p>
+      <p>Agora que temos o r2 instalado vamos pegar um pequeno <a href="https://raw.githubusercontent.com/n3k00n3/n3k00n3.github.io/master/files/challenges/challenge.c">challenge</a> pra aprender 'enquanto resolvemos ele' Na verdade tu vai resolver! Creio que assim fique mais divertido que apenas mostrar uma lista de comandos. Até porque é pra isso que existe a documentação.</p>
 
       <p> Como na maioria das aplicações CLI a flag de help é -h.</p>
       <blockquote><code><pre>
@@ -84,6 +84,45 @@ $ r2 -h
        <img src="../../files/images/aa.png" />
 
        <h2>Flags</h2>
+       <p>Após a análise o radare2 associa nomes para offsets interessantes como funções, seções, simbolos, strings... Esses nomes são chamados de 'flags' e são agrupadas na 'flag spaces'. Para listar é 'fs'.</p>
+       <img src="../../files/images/flagspace.png" />
+       <p>Para selecionar um espaço é só  usar 'fs < flagspace >' e 'f' para ver dentro desse espaço!</p>
+       <img src="../../files/images/fl.png" />
+
+       <h2>Strings</h2>
+       <p>Agora que sabemos que demos nomes aos bois, podemos  da um olhada nas strings no binário :D</p>
+       'iz' serve para listar strings em seções data(Lembram disso né?) ou comando interessante é 'izz' que mostra strings de todo o binário e não apenas da seção data.</p>
+        <img src="../../files/images/iz.png" />
+
+        <h2>Seeking</h2>
+        <p>Já que sempre estamos em um offset e precisamos pular de offset para offset o comando que nos ajuda é o 's' para mais info só usar o '?' ao lado. Repare que o offset mudou.</p>
+        <img src="../../files/images/s.png" />
+
+        <p>Antes de pularmos de offset podemos ver o que o radare já 'flagou' pra gente para ficar mais tranquilo. O comando é 'afl' Analyse Functions List. Já da para ver Funções interessantes.</p>
+        <img src="../../files/images/afl.png" />
+
+        <h2>Disas</h2>
+        <p>Já estava na hora de vermos Assembly(Yay!). O comando para printar ele é o 'pdf' Print Disassemble Function.</p>
+        <blockquote>
+          Nota: Como a ideia é mostrar o radare2 não irei comentar o código assembly! Até porque assim que vocês verem o disas do binário, vão ver que é easy, no modo visual então vai ser ainda mais.
+        </blockquote>
+        <img src="../../files/images/pdf.png" width="90%" />
+
+        <h2>Comandos Visuais</h2>
+        <p>Para se movimentar é como no vim usamos 'h', 'j', 'k', 'l', além do mouse! As funções também ficam com letras entre colchetes que nos ajudam a nos movimentar mais rápidos só digitar o que estiver dentro como [ga] = 'ga'. </p>
+        <p>Para executar comandos dentro do modo visual é só apertar ':' e digitar o comando, tu pode adicionar comentários ou remover ';'  e para sair é simplesmente 'q'</p>
+
+        <p>O modo Gráfico Visual mostra um fluxo de maneira muito legal!</p>
+        <img src="../../files/images/VVV.png" width="90%" />          
+
+        <p>Tente resolver o desafio sem olhar o código fonte com atenção! só olhe depois isso vai te ajudar muito!</p>
+        <hr>
+      <p>Referências:</p>
+      <ul>
+        <li><a href="http://www.radare.org/r/docs.html" target="_blank">Documentação Radare2</a></li>
+        <li><a href="https://radare.gitbooks.io/radare2book/content/" target="_blank">Livro Radare2</a></li>
+        <li><a href="https://www.megabeets.net/" target="_blank">Introdução Radare2</a></li>
+      </ul>
       <br>
       <strong>Done! Happy Reverse!</strong>
     </div>

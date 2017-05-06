@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <title>n3k00n3| Labs</title>
+  <meta name="viewport" content="width=device-width">
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="../../files/style.css" rel="stylesheet">
+  <link href="../../files/colors-dark.css" rel="stylesheet">
+</head>
+<body>
+
+  <header id="header">
+    <a href="index.html"><img alt="n3k00n3 | Labs" src="../../files/logo.png"></a>
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../blog.html">Blog</a></li>
+		      <li><a href="../../links.html">Links</a></li>
+          <li><a href="../../about.html">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  <div id="content">
+    <div id="blog-archives">
+	    <h1><strong>Cripto para CTF-Players</strong></h1>
+      <h2>O lado Secreto da força!</h2>
+
+      <blockquote><pre><center>
+  “O impulso para descobrir segredos está profundamente enraizado na natureza humana, 
+mesmo a mente menos curiosa é estimulada pela perspectiva de compartilhar o conhecimento 
+ oculto aos outros. Alguns têm bastante sorte em encontrar um trabalho que consiste na 
+ solução de mistério, mas a maioria de nós é levada a controlar este impulso resolvendo
+ charadas artificiais criada para nosso entretenimento. Histórias de detetive e palavras 
+cruzadas divertem a maioria. Já a quebra de códigos secretos pode ser uma tarefa para poucos.”
+                                          <strong>Jhon Chadwick</strong> 
+                                  <em>The decipherment of LinearB</em>
+      </center><pre></blockquote><br><br>
+      <p>Então galera se tem uma coisa que sou fascinado é criptografia! É realmente incrível o quanto elas podem ter sido a chave principal para muitos casos, inclusive quem viveria ou morreria, se bem que ainda hoje vivemos isso. Uma outra coisa que é muito intrigrante é que enquanto falamos dessas criptos existe alguma camâra negra(Era um nome dado para as agências que tinha a especialidade em quebrar crifras na europa) quebrando novas cifras ou criando uma mais forte e talvez a gente só saiba daqui a algumas decádas como no caso da quebra da enigma, assim como a criação da cripto que hoje conhecemos como RSA e um grupo já tinha desenvolvido um algoritmo parecido porém em um ambiente militar e seus resultados não podiam vir a público(Conhecidência ou não esse caso é do GCHQ).</p>
+      <p>Nesse post tentarei não só mostrar as criptos, mas como quebrar-las e contar um pouco da história que envolve a <strong>cifra</strong>. Também deixarei o código para que vocês possam ver/melhorar/reusar/. Os Códigos estão feitos em C e Assembly para não perdermos o foco de LOW-LEVEL.</p>
+
+      <blockquote>
+      Algumas cifras não terão códigos pois as maneiras de serem usadas podem ser diversas e depende muito de quem usa.
+      </blockquote>
+
+      <h2>Criptologia</h2>
+      <p>A criptologia pode ser divida em algumas partes, <strong>Esteganografia</strong> que vem do grego Steganos que significa <em>coberto</em> e  Graphein que significa <em>escrever</em> e <strong>Criptografia</strong> que vem da palavra grega Kriptos que significa <em>oculto</em>, Entretanto o que é oculto é o significado original do que foi encriptado. Dentro da criptografia vamos ver sobre transposição e substituição. Não falaremos muito de código aqui, código é quando usamos uma palavra no lugar de outra palavra ou frase. Por exemplo: "Vamos atacar o morro!" pode virar um código como 'Nike'. Uma palavra qualquer que para a maioria das pessoas não tem um significaod como o da frase, mas para quem está envolvido ao ataque ao morro faz sentido. Então se essa mensagem é pega em uma escuta não irá fazer muito sentindo até que observe várias vezes e associem que todo dia de 'Nike' um morro é invadido.</p>
+
+
+      <h2>Cifras de Transposição</h2>
+      <p>As cifras de transposição são as cifras que a ordem das letras são rearranjadas, gerando assim um anagrama. Como por exemplo a palavra 'ema' tem apenas 3 letras e se rearranjarmos elas teremos 6 maneiras diferentes incĺuíndo a original: 'ema', 'eam', 'aem', 'mea', 'mae', 'ame'. Então o destinatario precisar saber a ordem em que foi rearrajado para ler já e outras palavras comuns podem aparecer na tentativa de quebrar e a dificuldade da quebra se torna mais complicado quando se trata de frases e textos 'Como por exemplo essa frase'. Tem apenas 27 letras, e no entanto existem mais ou menos 50.000.000.000.000.000.000.000.000.000.000 possibilidades. Claro que isso pra nosso tempo com tecnologia se torna easy pegar a informação certa, mas imagina quando não tinhamos computadores para isso. Se uma pessoa pudesse verificar uma disposição por segundo, e se todas no mundo trabalhassem dia e noite, levaria mais tempo o nosso universo tem de existência.</p>
+      <h3>Rail Fence</h3>
+      <p>Foi uma tranposição muito usada por estudantes e consiste em pegar uma frase e alternar os caracteres como por exemplo:</p>
+      <blockquote><pre>
+PlainText: vamos atacar ao amanhecer
+
+  Cifrando...
+  v m s t c r o m n e e
+   a o a a a a a a h c r
+
+CipherText: VMSTCROMNEEA0AAAAAAHCR
+      </pre></blockquote>
+      <p>Para desfazer é tão fácil quanto para cifrar. Existem outas alternativas que usam mais de duas linhas.</p>
+      <h3>Route</h3>
+      <p>Essa crifra é uma das cifras que precisa ser bem definida antes das trocas vamos usar um exemplo aqui com a mesma frase, e a chave será um formato que pegar das pontas até o centro.</p>
+      <blockquote>
+PlainText: vamos atacar ao amanhecer
+Cifrando...
+    v.a.r.a.e
+    a.t.a.n.r
+    m.a.o.h.
+    o.c.a.e.
+    s.a.m.c
+CipherText: SOMAV RE ACATA CEHNA MAOAR (Está com espaço pra ficar mais fácil)
+      </blockquote>
+      <h3>transposição de coluna</h3>
+      <p>Neste caso a gente determina uma chave em que não exista letras repetidas e que tenha o tamanho das colunas que vamos por em nossa frase. Vamos usar aqui 'hacking'. após isso a gente reorganiza as colunas por ordem alfábetica da chave.</p>
+      <blockquote><pre><code>
+Plaintext: Vamos atacar ao amanhecer
+Key: hacking
+Cifrando...
+    H_A_C_K_I_N_G   <-  Chave
+    3.1.2.6.5.6.4   <-  Ordem alfábetica
+    V.A.M.O.S.A.T   <- 
+    A.C.A.R.A.O.A     |
+    M.A.N.H.E.C.E     |
+    R                 |_Frase
+
+Ciphertext: ACA MAN VAMR TAE SAE ORH
+      </code></pre></blockquote>
+    <h3>Citale</h3>
+    <p>Um dos primeiros aparelhos militar foi o Citale Espartano. Ele data 5 anos A.C e é basicamente um bastão de madeira que era enrolado uma tira de couro ou pergaminho, assim era escrito a frase e ao densenrolar a tirar parecia um monte de letra espalhada e sem sentido para decifrar era preciso usar um bastão do mesmo tamanho se não a frase não faria sentido também e os espartanos ainda davam um toque de esteganografia usando as tiras como cinto com as letras para parte de dentro. Podemo ver algo parecido nos cordões das credenciais do Roadsec.</p>
+
+    <center><img src="../../files/images/citale.png" width="30%" />
+    <img src="../../files/images/scitala.png" /></center>
+
+    </div>
+  </div>
+  </div>
+  <footer id="footer">
+    <p class="copyright">Hack The Planet!</p>
+    <!-- Thanks to <a href="http://www.webmaster-source.com">Matt Harzewski</a> for the theme!!!</p> -->
+  </footer>
+  <script src="../../files/jquery.min.js"></script>
+  <script src="../../files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+    });
+  </script>
+</body></html>

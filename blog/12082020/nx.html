@@ -34,8 +34,7 @@
       <p>No eXecute, também conhecido como NX é uma das proteções mais comuns encontradas em binários. A ideia é fazer com que a stack não seja executável e assim impedir nossos shellcodes.</p>
       <p>A proteção foi inventada em 2004, em processadores AMD faz uso do bit <strong>No eXecute ( NX )</strong> e em processadores Intel é o <strong>disable bit (XD)</strong>. A proteção impede que o shellcode seja executado quando está na stack.</p>
 
-      <p>O bypass de NX é simples, mas quase nunca vai ser encontrado sozinho, talvez em desafios de CTF.</p>
-      <p>Quando está com outras proteções, acaba não sendo tão fácil, todavia, ainda é possível. Veremos em posts posteriores a esse.</p>
+      <p>O bypass de NX é simples, porém quase nunca vai ser encontrado sozinho. Uma exeção para os desafios de CTF, onde podemos encontrar diversos tipos de cenários com o propósito de expandir nossos conhecimentos.</p>
       <p> Em ambientes 32b, vai ser possível enviar argumentos de uma função para stack e chamar alguma função, faremos uso da função system da libc que se tornou a famosa trick <strong>ret2libc</strong>/<strong>ret2System</strong>.
 
       <p>LibC é uma biblioteca padrão em ambientes GNU/Linux, ela contêm funções que são indispensáveis para que os programas funcionem. Para checar nosso binário podemos fazer uso do comando <strong>ldd</strong></p>
@@ -78,7 +77,7 @@ echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
       <img src="../../files/images/nx-enabled.png" width="90%" />
 
       <p>Já vimos sobre Stack overflow no post: <a href="../02132017/stackOverflow.html">Stack Overflow</a><br>
-      <p>Fazendo o disas da função main, podemos ver a chamada para a função overflow.</p>
+      <p>Fazendo o <strong>disas</strong> da função main, podemos ver a chamada para a função overflow.</p>
       <blockquote><code><pre>
     gdb-peda$ disas main
     Dump of assembler code for function main:
@@ -188,7 +187,7 @@ Found 11 results, display max 11 items:
 [stack] : 0xffffd817 ("/bin/zsh")
       </pre></code></blockquote>
 
-      <p>Perfeito, vamos usar o endereço <strong>0xf7f5c352</strong>. Entretanto ainda precisamos adicionar um endereço de retorno entre nossa chamada da system e o primeiro argumento, podemos usar algo como AAAA (0x41414141), mas, vamos usar o endereço da função exit que pode ser encontrada com o commando p.</p>
+      <p>Perfeito, vamos usar o endereço <strong>0xf7f5c352</strong>. Entretanto ainda precisamos adicionar um endereço de retorno entre nossa chamada da system e o primeiro argumento, podemos usar algo como AAAA (0x41414141), mas, vamos usar o endereço da função exit que pode ser encontrada com o comando p.</p>
 
       <p>Nosso exploit vai ficar assim:</p>
 

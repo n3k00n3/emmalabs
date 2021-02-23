@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <title>n3k00n3 | Labs</title>
+  <meta name="viewport" content="width=device-width">
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="../../files/style.css" rel="stylesheet">
+  <link href="../../files/colors-dark.css" rel="stylesheet">
+</head>
+<body>
+
+  <header id="header">
+  </header>
+
+  <div id="page">
+    <div id="sidebar">
+      <nav>
+        <ul>
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../blog.html">Blog</a></li>
+		      <li><a href="../../links.html">Links</a></li>
+          <li><a href="../../about.html">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  <div id="content">
+    <div id="blog-archives">
+	    <h1><strong>[ Writeup ] TenableCTF -  Thumbail</strong></h1>
+
+      <h2>Sobre o chall</h2>
+      <p>O challenge era uma página com file upload para enviar um vídeo e ele mostraria o thumbnail.</p>
+      <img src="../../files/images/1.png" width="120%">
+
+      <h2>No caminho da solução</h2>
+      <p>Olhando o código fonte da página, vimos que tinha uma pasta /uploads/ e nela tinha algumas imagens e a flag, mas não tinhamos permissão de acesso para ver o arquivo da flag</p>
+      <img src="../../files/images/source-code.png" width="150%">
+      <img src="../../files/images/folder.png" width="150%">
+      <img src="../../files/images/flag-not-accessible.png" width="150%">
+
+      <p>Imaginei que fosse um SSRF, mas ainda não tinha ideia de como pegar esse arquivo, tentei mudar o arquivo via repeater para ver se modificava o base64 que ele gerava na página, mas não deu certo. Um amigo deu uma luz de casos de ssrf via arquivos de vídeo e então procurei sobre isso e achei um paper e uns reports na hackerone.</p> 
+
+      <h2>Solução</h2>
+
+      <p>Então usei uma tool para inserir o caminho do arquivo no vídeo, mas poderia ter resolvido só com ffmpeg</p>
+      <blockquote>
+        <code>
+          <pre>
+            ./gen_xbin_avi.py file:///var/www/html/uploads/flag.txt ~/Downloads/bla.mp4
+          </pre>
+        </code>
+      </blockquote>
+      <img src="../../files/images/command.png" width="150%">
+      
+      <p>Para ver como ficou no arquivo usei o comando strings</p>
+      <img src="../../files/images/mp4.png" width="150%">
+      <h2>Voilá</h2>
+
+      <p>Só subir o arquivo e done!</p>
+      <img src="../../files/images/flag.png" width="150%">
+
+      <h3>Referências</h3>
+    <ul>
+      <li> 
+        <a href="https://www.blackhat.com/docs/us-16/materials/us-16-Ermishkin-Viral-Video-Exploiting-Ssrf-In-Video-Converters.pdf" target="_blank">Paper BlackHat</a>
+      </li>
+      <li>
+        <a href="https://github.com/neex/ffmpeg-avi-m3u-xbinf" target="_blank">Tool do neex</a>
+      </li>
+      <li>
+        <a href="https://hackerone.com/reports/487008">HackerOne report</a>
+      </li>
+      </ul>
+
+      <br><br>
+      <strong>Done! Have fun!</strong>
+    </div>
+  </div>
+  </div>
+  <footer id="footer">
+    <p class="copyright">Hack The Planet!</p>
+    <!-- Thanks to <a href="http://www.webmaster-source.com">Matt Harzewski</a> for the theme!!!</p> -->
+  </footer>
+  <script src="../../files/jquery.min.js"></script>
+  <script src="../../files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+    });
+  </script>
+</body></html>

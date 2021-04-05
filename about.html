@@ -7,39 +7,43 @@
     <meta name="viewport" content="width=device-width">
     <link href="./files/style.css" rel="stylesheet">
     <link href="./files/colors-dark.css" rel="stylesheet">
+
   </head>
 <body>
   <header id="header">
-    <!-- <a href="index.html"><img alt="n3k00n3 Labs" src="./files/logo.png"></a> -->
   </header>
+
   <div id="page">
     <div id="sidebar">
       <nav>
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="blog.html">Blog</a></li>
-          <li><a href="links.html">Links</a></li>
           <li><a href="about.html">About</a></li>
         </ul>
-    </nav>
+      </nav>
     </div>
+  
     <div id="content">
       <h1 id="about">About</h1>
-      <p>Meu nome é Fernando 'n3k00n3' Pinheiro, uma pessoa não binária/LGBTQ.<br> Atualmente trabalho como Pentester!<br><br>
-      Dedico meu tempo livre lendo e resolvendo Desafios de Segurança! Por gostar tanto de fazer isso pensei em documentar os desafios que resolvo em textos e vídeos, os textos podem ser encontrados aqui e os vídeos no canal <a href="https://www.youtube.com/nekoone">Nekoone</a>.<br><br>
-      Gosto também de desafios de LockPick, gatos, café, chocolate, muita cerveja  e música do 'diabo' bem alta(uso fone :))<br>
-      Se quiser entrar em contato comigo, pode ser por aqui:: <code>n3k00n3[at]protonmail[dot]com</code></p>
+      <p>I am Security Researcher living in a tropical island from Brazil.<br>
+        Nowadays my focus is web application flaws and secure coding review.
+         I really like to find security bugs and I'll use this blog to share with others what I find during my free time.
+      </p>
+    </div>
+
+    <!-- Foot -->
+    <footer id="footer">
+      <p class="copyright">Hack The Planet!</p>
+    </footer>
+    <script src="./files/jquery.min.js"></script>
+    <script src="./files/jquery.mobilemenu.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
+      });
+    </script>
   </div>
-  <!-- Foot -->
-  <footer id="footer">
-    <p class="copyright">Hack The Planet!</p>
-  </footer>
-  <script src="./files/jquery.min.js"></script>
-  <script src="./files/jquery.mobilemenu.min.js"></script>
-  <script>
-    $(document).ready(function(){
-      $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
-    });
-  </script>
+
 </body>
 </html>

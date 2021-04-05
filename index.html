@@ -1,5 +1,6 @@
-<!DOCTYPE  html>
+<!DOCTYPE html>
 <html>
+
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta charset="UTF-8">
@@ -7,10 +8,11 @@
   <meta name="viewport" content="width=device-width">
   <link href="./files/style.css" rel="stylesheet">
   <link href="./files/colors-dark.css" rel="stylesheet">
+
 </head>
+
 <body>
   <header id="header">
-    <!-- <a href="index.html"><img alt="n3k00n3 | Labs" src="./files/logo.png"></a> -->
   </header>
   <div id="page">
     <div id="sidebar">
@@ -18,120 +20,30 @@
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="blog.html">Blog</a></li>
-          <li><a href="links.html">Links</a></li>
           <li><a href="about.html">About</a></li>
         </ul>
       </nav>
     </div>
-    <div id="content">
-      <h1>Bem Vindos!</h1>
-      <p>Olá Pessoas lindas e maravilhos!<br>
-      <b>n3k00n3 Labs</b> é meu blog pessoal para escrever sobre infosec, programming e writeups!</p>
-      <p>Espero contribuir de alguma forma para sua melhora e melhorar minhas habilidades enquanto escrevo e faço meus vídeos</p>
-    </div>
-    <h1>Últimos Posts</h1>
+
+    <h1>Recent Posts</h1>
+
     <div class="post-content">
       <article class="post">
-        <h2>23 Fev 2021
-          <a href="blog/23022021/thumbnail.html">[writeup] TenableCTF - Thumbnail</a></h2>
-        </h2>
-        <blockquote>
-          <p>Como resolver o challenge Thumbnail que teve no TenableCTF</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>08 Dez 2020
-          <a href="blog/12082020/nx.html">Bypass No eXecute (NX)</a></h2>
-        </h2>
-        <blockquote>
-          <p>Explicação sobre como funciona o bypass da proteção NX</p>
-        </blockquote>
-      </article>
-        <h2>27 abr 2017
-          <a href="blog/04272017/radare.html"> Radare2 | R2 em 15 minutos</a></h2>
-        </h2>
-        <blockquote>
-          <p>Rápida explicação sobre Radare2 para que se torne mais fácil o aprendizado do framework!</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>18 abr 2017
-          <a href="blog/04182017/XorEncoder.html"> Encodando Shellcodes | Xor Cipher</a>
-        </h2>
-        <blockquote>
-          <p>Introdução a osfuscação de Shellcodes</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>05 abr 2017
-          <a href="blog/04052017/Shellcode.html">Construindo Shellcodes[64BITS]</a>
-        </h2>
-        <blockquote>
-          <p>Introdução a construção de Shellcodes em 64bits</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>15 mar 2017
-          <a href="blog/03152017/easyELF.html">[WRITEUP] Reverse Easy_ELF!</a>
-        </h2>
-        <blockquote>
-          <p>Solução do desafio Easy_ELF do reverseing.kr</p>
-          <p>De maneira explicativa do código em assembly</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>13 fev 2017
-          <a href="blog/02132017/stackOverflow.html">Buffer Overflows(Parte 0x01)!</a>
-        </h2>
-        <blockquote>
-          <p>Stack Based BufferOverflow</p>
-          <p>Sequestro de execução...</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>18 Jul 2016
-          <a href="blog/07182016/rubocop.html">Rubocop - Checando o código!</a>
-        </h2>
-        <blockquote>
-          <p>Rubocop</p>
-          <p>Hora de checar se o código está bem escrito e se tem warning de segurança...</p>
-        </blockquote>
-      </article>
-      <article class="post">
-        <h2>27 Jun 2016
-		      <a href="blog/06272016/matroshka.html">CTF - Matroshka [1Day_1Chall]</a>
-        </h2>
-        <blockquote>
-          <p>Write-up do Challenge Matroshka do CTF organizado pelo CTF-BR na Campus Party</p>
-          <p>Hint → D1v1r74-53 c0m 4 Matroshka! (use wget se tiver dificuldades para baixar o arquivo) <a href="http://game.ctf-br.org/challenges/Day1-Matroshka.zip" target="blank">Download do chall</a></p>
-	       </blockquote>
-      </article>
-      <article class="post">
-        <h2>08 Jan 2016
-          <a href="blog/01082016/dvwa.html">Damn Vulnerable Web Application</a>
-        </h2>
-        <blockquote>
-          <p>Subindo a aplicação de modo rápido e sem dores com Docker</p>
-        </blockquote>
+        <h2><a href="blog/23022021/thumbnail.html">[writeup] TenableCTF - Thumbnail</a></h2>
       </article>
     </div>
-  <!--
-    <div class="postnavigation">
-      <span class="nope left">← Newer</span>
-      <span class="pages">Page 1 of 2</span>
-      <a class="next right" href="page2.html">Older →</a>
-    </div>
-  -->
   </div>
-<footer id="footer">
-  <p>Happy Hunting!</p>
-</footer>
-<script src="./files/jquery.min.js"></script>
-<script src="./files/jquery.mobilemenu.min.js"></script>
-<script>
-  $(document).ready(function(){
-    $('#sidebar nav ul').mobileMenu({'topOptionText': 'Menu', 'prependTo': '#sidebar nav'});
-  });
-</script>
+
+  <footer id="footer">
+    <p>Happy Hunting!</p>
+  </footer>
+  <script src="./files/jquery.min.js"></script>
+  <script src="./files/jquery.mobilemenu.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#sidebar nav ul').mobileMenu({ 'topOptionText': 'Menu', 'prependTo': '#sidebar nav' });
+    });
+  </script>
 </body>
+
 </html>

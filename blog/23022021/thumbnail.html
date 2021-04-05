@@ -35,8 +35,11 @@
       </article>
       <h1>[ Writeup ] TenableCTF - Thumbnail</h1>
 
-      <h2>About the Challenge</h2>
-      <hr>
+      <section class="pbanner">
+        <h2>About the Challenge</h2>
+        <hr>
+      </section>
+      
       <p>Basically the challenge is file upload which show the thumnail when you send a mp4 file.</p>
       <figure>
         <img src="../../files/images/1.png" width="100%">
@@ -62,9 +65,11 @@
         After a while a friend told me about SSRF using video files, so I found a paper and some hackerone's reports.
       </p>
 
-      <h2>Challenge Solution</h2>
-      <hr>
-
+      <section class="pbanner">
+        <h2>Challenge Solution</h2>
+        <hr>
+      </section>
+      
       <p>
         So, I used a tool to insert the path to the flag file, once we already know the full path disclosed.
       </p>
@@ -75,10 +80,6 @@
           </pre>
         </code>
       </blockquote>
-
-      <p>Para ver como ficou no arquivo usei o comando strings</p>
-      <img src="../../files/images/mp4.png" width="100%">
-
 
       <p>After upload the new mp4 file we can get the flag.</p>
       <figure>

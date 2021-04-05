@@ -58,6 +58,15 @@ blockquote {
 	border-color: #FD971F;
 }
 
+.pbanner {
+	margin-bottom: 30px;
+	margin-top: 30px;
+}
+
+.pbanner h2 {
+	font-weight: 600;
+}
+
 #sidebar a:hover {
 	font-weight: 900;
 }

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>n3k00n3 | Labs</title>
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+    <link href="../../files/style.css" rel="stylesheet">
+    <link href="../../files/colors-dark.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <header id="header">
+    </header>
+
+    <div id="page">
+        <div id="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="../../index.html">Home</a></li>
+                    <li><a href="../../blog.html">Blog</a></li>
+                    <li><a href="../../about.html">About</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div id="content">
+            <article class="post">
+            </article>
+            <h1>GLPI &lt;=9.5.4 Stored Cross-Site Scripting (XSS)</h1>
+            <h3>Stealing Privileges Accounts</h3>
+            
+            <section class="pbanner">
+                <h2>What's GLPI?</h2>
+                <hr>
+            </section>
+
+            <p>
+                GLPI is an incredible ITSM software tool that helps you plan and manage IT changes in an easy way, 
+                solve problems efficiently when they emerge and allow you to gain legitimate control over your company’s IT budget, and expenses.
+            </p>
+            <p>
+                Many companies use GLPI to manage their clients and tickets.
+                GLPI has different kind of users. To manage plugins the user needs to has a tech role. So if you steal this kind of account
+                you can go to administration page and dump the whole database to clone in your local lab.
+            </p>
+
+            <section class="pbanner">
+                <h2>The Vector</h2>
+                <hr>
+            </section>
+
+            <p>During the installation process, GLPI reads the setup.php file from plugins to show informations as author, plugin version, 
+                license and etc...
+            </p>
+            <p>The problem here is simple, they do not validate and sanitize these informations before render to the user. 
+                Trust the user input is never a good idea.
+            </p>
+
+            <figure>
+                <img src="../../files/images/cve-2021-3486/setup-plugin.png" width="100%">
+                <figcaption>Fig.1 - The setup.php file from plugins.</figcaption>
+            </figure>
+            
+
+
+            <figure>
+                <img src="../../files/images/cve-2021-3486/alert-executed.jpeg" width="100%">
+                <figcaption>Fig.2 - Alert executed</figcaption>
+            </figure>
+            
+            <h2>References</h2>
+            <ul>
+                <li>
+                    <a href="https://github.com/stdonato/glpi-dashboard/blob/master/setup.php"
+                        target="_blank">
+                        Dashboard Plugin
+                    </a>
+                </li>
+                <li>
+                    <a href="https://github.com/glpi-project/glpi" target="_blank">
+                        GLPI 9.5.4
+                    </a>
+                </li>
+
+
+            <footer id="footer">
+                <p class="copyright">Hack The Planet!</p>
+            </footer>
+            <script src="../../files/jquery.min.js"></script>
+            <script src="../../files/jquery.mobilemenu.min.js"></script>
+            <script>
+                $(document).ready(function () {
+                    $('#sidebar nav ul').mobileMenu({ 'topOptionText': 'Menu', 'prependTo': '#sidebar nav' });
+                });
+            </script>
+        </div>
+    </div>
+</body>
+
+</html>

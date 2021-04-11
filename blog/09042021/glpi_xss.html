@@ -57,7 +57,7 @@
                 <hr>
             </section>
 
-            <p>During the installation process, GLPI reads the setup.php file from plugins to show informations as author, plugin version, 
+            <p>During the plugin installation process, GLPI reads the setup.php file from plugins to show informations as author, plugin version, 
                 license and etc...
             </p>
             <p>The problem here is simple, they do not validate and sanitize these informations before render to the user. 
@@ -94,8 +94,8 @@
             </figure>
 
             <p>
-                To display all inftomations to the user, Glpi uses /front/plugin.php that calls view.class.php. As the folloing image shows,
-                there is no checking to escape html/javascript code. All information is concated directly to HTML.
+                To display these informations to the user, Glpi uses /front/plugin.php that calls view.class.php. As the following image shows,
+                there is no checking to escape html/javascript code. All information is concatened directly to HTML.
             </p>
             
             <figure>

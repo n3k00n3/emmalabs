@@ -64,23 +64,23 @@
                 Trust the user input is never a good idea.
             </p>
 
-            <figure>
-                <img src="../../files/images/cve-2021-3486/setup-plugin.png" width="100%">
-                <figcaption>Fig.1 - The setup.php file from plugins.</figcaption>
-            </figure>
-            
             <p>
                 GLPI loads the plugin using the setup.php file, as we can see in this piece of code.
             </p>
 
             <figure>
                 <img src="../../files/images/cve-2021-3486/load-plugin.png" width="100%">
-                <figcaption>Fig.2 - Load Plugins</figcaption>
+                <figcaption>Fig.1 - Load Plugins</figcaption>
+            </figure>
+
+            <figure>
+                <img src="../../files/images/cve-2021-3486/setup-plugin.png" width="100%">
+                <figcaption>Fig.2 - The setup.php file from plugins.</figcaption>
             </figure>
 
             <p>
                 Plugins need to have a function called plugin_version_NAMEOFPLUGIN(). This function will return the array that contains
-                all informations as version, author, license, homepage and the min GLPI version. We saw this function at Fig.1.
+                all informations as version, author, license, homepage and the min GLPI version. We saw this function at Fig.2.
             </p>
 
             <figure>

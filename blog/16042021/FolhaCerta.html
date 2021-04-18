@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>n3k00n3 | Labs</title>
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+    <link href="../../files/style.css" rel="stylesheet">
+    <link href="../../files/colors-dark.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <header id="header">
+    </header>
+
+    <div id="page">
+        <div id="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="../../index.html">Home</a></li>
+                    <li><a href="../../blog.html">Blog</a></li>
+                    <li><a href="../../about.html">About</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div id="content">
+            <article class="post">
+            </article>
+            <h1>Full Account TakeOver</h1>
+            <h3>Stealing any account from FolhaCerta App</h3>
+
+            <section class="pbanner">
+                <h2>FolhaCerta App</h2>
+                <hr>
+            </section>
+
+            <p>
+                FohaCerta is an app for managing employees and labor routines for companies, managers, employees and
+                Human Resources.
+            </p>
+
+            <section class="pbanner">
+                <h2>The Vulnerability</h2>
+                <hr>
+            </section>
+
+            <p>
+                The application has a reset password function. This function sends a tokenId to the user's email.
+                This kind of function is really common, but in this case the application doesn't invalidate this token
+                after the use.
+
+                This kind of behavior alone is a flaw. however this tokenId would be a problem if a malicious agent get
+                a way to access the user's email.
+            </p>
+
+            <figure>
+                <img src="../../files/images/folhacerta/email-troca-senha.png" width="100%">
+                <figcaption>Fig.1 - Email to reset the password.</figcaption>
+            </figure>
+
+            <figure>
+                <img src="../../files/images/folhacerta/token-id-troca-senha.png" width="100%">
+                <figcaption>Fig.2 - Change Password</figcaption>
+            </figure>
+
+            <p>
+                I noticed my name and I tried to understand how the application brings this information.
+                There is a <strong>usarii.Id</strong> that will be sent together the new password. If we change this
+                number (IDOR) the application brings another name from another account.
+            </p>
+
+            <figure>
+                <img src="../../files/images/folhacerta/senha.png" width="100%">
+                <figcaption>Fig.3 - Change password request details</figcaption>
+            </figure>
+
+            <p>
+                Great, maybe if we change this <strong>usuario.Id</strong> number and send another password we can
+                change the password
+                from this
+                user. unfortunaly we need to know the email of this user to reach it.
+            </p>
+
+            <blockquote>
+                <p>PS: The way how we can get another user's email is not relevant here.</p>
+            </blockquote>
+
+            <p>
+                So, I decided to put an email from a colegue who accepted it. I just put his email and bruteforce the
+                <strong>usuario.Id</strong> param. After a while he lost his session and I saw the contratulations
+                message from the app.
+            </p>
+
+            <figure>
+                <img src="../../files/images/folhacerta/troca-de-senha-realizada.png" width="100%">
+                <figcaption>Fig.4 - The password was changed</figcaption>
+            </figure>
+
+            <p>
+                As we can see to change someone's password we just need to know his email and bruteforce the
+                <strong>usuario.Id</strong>
+                param. Another good point is the collection of flaws.
+            </p>
+            <ul>
+                <li>Token is not invalidated</li>
+                <li>IDOR into usuario.Id</li>
+                <li>There is no password policy</li>
+                <li>There is no anti-CSRF mechanism</li>
+            </ul>
+
+            <p>
+                After change the password user you can access it by the mobible app or by the web application interface.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    <a href="https://folhacerta.com/">FolhaCerta App</a>
+                </li>
+            </ul>
+
+            <footer id="footer">
+                <p class="copyright">Hack The Planet!</p>
+            </footer>
+            <script src="../../files/jquery.min.js"></script>
+            <script src="../../files/jquery.mobilemenu.min.js"></script>
+            <script>
+                $(document).ready(function () {
+                    $('#sidebar nav ul').mobileMenu({ 'topOptionText': 'Menu', 'prependTo': '#sidebar nav' });
+                });
+            </script>
+        </div>
+    </div>
+</body>
+
+</html>
